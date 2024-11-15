@@ -15,6 +15,8 @@
 
 By integrating Nautilus AI into Nautilus Trader, users might be able unlock the full potential of AI-driven trading strategies.
 
+**Nautilus AI is inspired by FreqAI, which explains some of the similarities you might see.**
+
 # References 
 ```bibtex
 @article{caulk2022freqai,
