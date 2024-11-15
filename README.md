@@ -16,6 +16,7 @@
 By integrating Nautilus AI into Nautilus Trader, users might be able unlock the full potential of AI-driven trading strategies.
 
 
+```bibtex
 @article{caulk2022freqai,
   title={FreqAI: generalizing adaptive modeling for chaotic time-series market forecasts},
   author={Caulk, Robert A and T{\"o}rnquist, Elin and Voppichler, Matthias and Lawless, Andrew R and McMullan, Ryan and Santos, Wagner Costa and Pogue, Timothy C and van der Vlugt, Johan and Gehring, Stefan P and Schmidt, Pascal},
@@ -25,3 +26,4 @@ By integrating Nautilus AI into Nautilus Trader, users might be able unlock the 
   pages={4864},
   year={2022}
 }
+```
