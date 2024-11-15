@@ -15,7 +15,7 @@
 
 By integrating Nautilus AI into Nautilus Trader, users might be able unlock the full potential of AI-driven trading strategies.
 
-
+# References 
 ```bibtex
 @article{caulk2022freqai,
   title={FreqAI: generalizing adaptive modeling for chaotic time-series market forecasts},
