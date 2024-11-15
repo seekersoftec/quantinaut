@@ -22,6 +22,7 @@ joblib = "1.4.2"
 lightgbm = "4.5.0"
 datasieve = "0.1.7"
 matplotlib = "^3.9.2"
+pandas = "^2.2.3"
 
 
 [build-system]
