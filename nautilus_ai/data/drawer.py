@@ -1,37 +1,39 @@
-from typing import Any
-from nautilus_trader.core.data import Data
-from sklearn.linear_model import LinearRegression
+import collections
+import importlib
+import logging
+import re
+import shutil
+import threading
+import warnings
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+from typing import Any, TypedDict
 
-class Model(Data):
-    def __init__(
-        self,
-        model: Any,
-        ts_init: int,
-    ):
-        super().__init__(ts_init=ts_init, ts_event=ts_init)
-        self.model = model
-        
-class ModelUpdate(Data):
-    def __init__(
-        self,
-        model: Any,
-        hedge_ratio: float,
-        std_prediction: float,
-        ts_init: int,
-    ):
-        super().__init__(ts_init=ts_init, ts_event=ts_init)
-        self.model = model
-        self.hedge_ratio = hedge_ratio
-        self.std_prediction = std_prediction
+import numpy as np
+import pandas as pd
+import psutil
+
+# import rapidjson
+from joblib.externals import cloudpickle
+from numpy.typing import NDArray
+from pandas import DataFrame
+from nautilus_ai.common.logging import Logger
 
 
-class Prediction(Data):
-    def __init__(
-        self,
-        instrument_id: str,
-        prediction: float,
-        ts_init: int,
-    ):
-        super().__init__(ts_init=ts_init, ts_event=ts_init)
-        self.instrument_id = instrument_id
-        self.prediction = prediction
+logger = Logger(__name__)
+
+
+FEATURE_PIPELINE = "feature_pipeline"
+LABEL_PIPELINE = "label_pipeline"
+TRAINDF = "trained_df"
+METADATA = "metadata"
+
+
+class NautilusAIDataDrawer:
+    """
+    Class aimed at holding all pair models/info in memory for better inferencing/retrainig/saving
+    /loading to/from disk.
+    This object remains persistent throughout live/dry.
+    """
+
+    pass

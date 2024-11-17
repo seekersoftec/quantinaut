@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 
 import torch
 
-from nautilus_ai.freqai_interface import IFreqaiModel
+from nautilus_ai.interface import IFreqaiModel
 from nautilus_ai.torch.PyTorchDataConvertor import PyTorchDataConvertor
 
 

@@ -24,6 +24,9 @@ datasieve = "0.1.7"
 matplotlib = "^3.9.2"
 pandas = "^2.2.3"
 py-find-1st = "^1.1.6"
+urllib3 = "^2.2.3"
+requests = "^2.32.3"
+psutil = "^6.1.0"
 
 
 [build-system]

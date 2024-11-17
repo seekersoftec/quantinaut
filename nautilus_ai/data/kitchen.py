@@ -1,0 +1,2 @@
+class NautilusAIDataKitchen:
+    pass
