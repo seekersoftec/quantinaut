@@ -117,6 +117,79 @@ class RLConfig:
     progress_bar: bool = False
 
 
+class FeatureParameters:
+    """
+    Configuration for FeatureParameters instances, covering both general model training
+    parameters and reinforcement learning-specific parameters.
+
+    These parameters are specific to reinforcement learning and control agent behavior.
+
+    Parameters
+    ----------
+    feature_parameters : Integer, default 1
+        Number of steps into the future for predictions.
+    include_timeframes : List[String]
+        List of timeframes to include in feature engineering.
+    include_corr_pairlist : List[String]
+        List of correlated instruments to include in feature generation.
+    label_period_candles : Integer
+        Number of candles used for label generation.
+    include_shifted_candles : Integer
+        Number of shifted candles to include as features.
+    weight_factor : Float, default 0.4
+        Weighting factor for feature importance.
+    indicator_max_period_candles : Integer
+        Maximum candles for indicator computation.
+    indicator_periods_candles : List[Integer]
+        Periods of candles for indicator computation.
+    principal_component_analysis : Boolean, default False
+        Enables PCA for dimensionality reduction.
+    plot_feature_importances : Integer, default 0
+        Number of top features to visualize for importance.
+    DI_threshold : Float, default 0.9
+        Dependency index threshold for feature inclusion.
+    use_SVM_to_remove_outliers : Boolean
+        Enables SVM-based outlier removal.
+    svm_params : Dict
+        Parameters for the SVM model.
+    use_DBSCAN_to_remove_outliers : Boolean
+        Enables DBSCAN-based outlier removal.
+    noise_standard_deviation : Integer, default 0
+        Standard deviation of noise for data augmentation.
+    outlier_protection_percentage : Float, default 30
+        Percentage of data protected from outlier removal.
+    reverse_train_test_order : Boolean, default False
+        Reverses the train-test split order.
+    shuffle_after_split : Boolean, default False
+        Shuffles data after train-test split.
+    buffer_train_data_candles : Integer, default 0
+        Additional candles used for training data buffering.
+
+    ---Notes---
+    This class is designed to encapsulate key parameters for configuring RL training
+    and models, providing flexibility for both hyperparameter tuning and environment-specific requirements.
+    """
+
+    include_timeframes: List[str]
+    include_corr_pairlist: List[str] = []
+    label_period_candles: int
+    include_shifted_candles: int
+    weight_factor: float = 0.4
+    indicator_max_period_candles: int
+    indicator_periods_candles: List[int]
+    principal_component_analysis: bool = False
+    plot_feature_importances: int = 0
+    DI_threshold: float = 0
+    use_SVM_to_remove_outliers: bool
+    svm_params: dict
+    use_DBSCAN_to_remove_outliers: bool
+    noise_standard_deviation: int = 0
+    outlier_protection_percentage: float = 30
+    reverse_train_test_order: bool = False
+    shuffle_after_split: bool = False
+    buffer_train_data_candles: int = 0
+
+
 class INautilusAIModelConfig(ActorConfig):
     """
     Configuration for ``INautilusAIModel`` instances.
@@ -160,45 +233,8 @@ class INautilusAIModelConfig(ActorConfig):
         Delays predictions until a full training iteration completes.
 
     --- Feature Parameters ---
-
-    feature_parameters : Integer, default 1
-        Number of steps into the future for predictions.
-    include_timeframes : List[String]
-        List of timeframes to include in feature engineering.
-    include_corr_pairlist : List[String]
-        List of correlated instruments to include in feature generation.
-    label_period_candles : Integer
-        Number of candles used for label generation.
-    include_shifted_candles : Integer
-        Number of shifted candles to include as features.
-    weight_factor : Float, default 0.4
-        Weighting factor for feature importance.
-    indicator_max_period_candles : Integer
-        Maximum candles for indicator computation.
-    indicator_periods_candles : List[Integer]
-        Periods of candles for indicator computation.
-    principal_component_analysis : Boolean, default False
-        Enables PCA for dimensionality reduction.
-    plot_feature_importances : Integer, default 0
-        Number of top features to visualize for importance.
-    DI_threshold : Float, default 0.9
-        Dependency index threshold for feature inclusion.
-    use_SVM_to_remove_outliers : Boolean
-        Enables SVM-based outlier removal.
-    svm_params : Dict
-        Parameters for the SVM model.
-    use_DBSCAN_to_remove_outliers : Boolean
-        Enables DBSCAN-based outlier removal.
-    noise_standard_deviation : Integer, default 0
-        Standard deviation of noise for data augmentation.
-    outlier_protection_percentage : Float, default 30
-        Percentage of data protected from outlier removal.
-    reverse_train_test_order : Boolean, default False
-        Reverses the train-test split order.
-    shuffle_after_split : Boolean, default False
-        Shuffles data after train-test split.
-    buffer_train_data_candles : Integer, default 0
-        Additional candles used for training data buffering.
+    feature_parameters : ModelTrainingParameters, optional
+        Parameters for training the model.
 
     --- Data Split Parameters ---
 
@@ -213,8 +249,8 @@ class INautilusAIModelConfig(ActorConfig):
 
     --- Model Training Parameters ---
 
-    model_training_parameters : ModelTrainingParameters, optional
-        Parameters for training the model.
+    model_training_parameters : FeatureParameters, optional
+        The parameters used to engineer the feature set. 
 
     --- Reinforcement Learning Parameters ---
 
@@ -239,11 +275,11 @@ class INautilusAIModelConfig(ActorConfig):
     # General configuration parameters
     train_period_days: int = 30
     backtest_period_days: int = 7
-    identifier: str
+    identifier: str = "no_id_provided"
     live_retrain_hours: str
     expiration_hours: int = 0
     purge_old_models: int = 2
-    save_backtest_models: bool = False
+    save_backtest_models: bool = True
     fit_live_predictions_candles: int
     continual_learning: bool = False
     write_metrics_to_disk: bool = False
@@ -252,29 +288,11 @@ class INautilusAIModelConfig(ActorConfig):
     wait_for_training_iteration_on_reload: bool = True
 
     # Feature parameters
-    feature_parameters: int = 1  # Number of steps into the future for predictions
-    include_timeframes: List[str]
-    include_corr_pairlist: List[str]
-    label_period_candles: int
-    include_shifted_candles: int
-    weight_factor: float = 0.4
-    indicator_max_period_candles: int
-    indicator_periods_candles: List[int]
-    principal_component_analysis: bool = False
-    plot_feature_importances: int = 0
-    DI_threshold: float = 0.9
-    use_SVM_to_remove_outliers: bool
-    svm_params: dict
-    use_DBSCAN_to_remove_outliers: bool
-    noise_standard_deviation: int = 0
-    outlier_protection_percentage: float = 30
-    reverse_train_test_order: bool = False
-    shuffle_after_split: bool = False
-    buffer_train_data_candles: int = 0
+    feature_parameters: FeatureParameters = FeatureParameters()
 
     # Data split parameters
     train_interval_minutes: int = 60  # Interval between training sessions
-    data_split_parameters: dict
+    data_split_parameters: dict = {}
     test_size: float = 0.25
     shuffle: bool = False
 
