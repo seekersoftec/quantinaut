@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 import psutil
 
-# import rapidjson
+import rapidjson
 from joblib.externals import cloudpickle
 from numpy.typing import NDArray
 from pandas import DataFrame
@@ -50,8 +50,8 @@ class InstrumentInfo(TypedDict):
 
 class NautilusAIDataDrawer:
     """
-    Manages instrument models and associated metadata in memory for better
-    inference, retraining, and persistent storage to disk.
+    Manages instrument models, metrics, historical predictions, and associated metadata in memory for better
+    inference, retraining with capabilities for persistent storage and thread-safe updates.
 
     This class is designed to persist across live/dry runs, holding:
     - Instrument metadata
@@ -115,26 +115,162 @@ class NautilusAIDataDrawer:
         }
         self.model_type = self.nautilus_ai_info.model_save_type
 
-    def load_drawer_from_disk(self) -> None:
+    def update_metric_tracker(self, metric: str, value: float, instrument: str) -> None:
         """
-        Loads the instrument dictionary and other metadata from disk.
-        Override this method as needed to implement custom loading logic.
-        """
-        # TODO: Implement disk loading logic
-        pass
+        Add or update metrics in the metric tracker for a given instrument.
 
-    def load_historic_predictions_from_disk(self) -> None:
+        Args:
+            metric (str): The name of the metric (e.g., "train_time", "cpu_load").
+            value (float): The value of the metric.
+            instrument (str): The instrument associated with the metric.
         """
-        Loads historic predictions from disk into memory.
-        This ensures past predictions are available for analysis or backtesting.
-        """
-        # TODO: Implement historic prediction loading logic
-        pass
+        with self.metric_tracker_lock:
+            instrument_metrics = self.metric_tracker.setdefault(instrument, {})
+            metric_data = instrument_metrics.setdefault(
+                metric, {"timestamp": [], "value": []}
+            )
 
-    def load_metric_tracker_from_disk(self) -> None:
+            timestamp = int(datetime.now(timezone.utc).timestamp())
+            metric_data["value"].append(value)
+            metric_data["timestamp"].append(timestamp)
+
+    def collect_metrics(self, time_spent: float, instrument: str):
         """
-        Loads the metric tracker from disk to restore state.
-        This ensures metrics are persistent across sessions.
+        Collect training and system metrics and update the metric tracker.
+
+        Args:
+            time_spent (float): Time spent in training or processing.
+            instrument (str): The instrument associated with the metrics.
         """
-        # TODO: Implement metric tracker loading logic
-        pass
+        load1, load5, load15 = psutil.getloadavg()
+        cpu_count = psutil.cpu_count()
+
+        self.update_metric_tracker("train_time", time_spent, instrument)
+        self.update_metric_tracker("cpu_load1min", load1 / cpu_count, instrument)
+        self.update_metric_tracker("cpu_load5min", load5 / cpu_count, instrument)
+        self.update_metric_tracker("cpu_load15min", load15 / cpu_count, instrument)
+
+    def load_global_metadata_from_disk(self) -> Dict[str, Any]:
+        """
+        Load global metadata from the disk.
+
+        Returns:
+            dict: The loaded metadata dictionary, or an empty dictionary if not found.
+        """
+        if self.global_metadata_path.is_file():
+            with self.global_metadata_path.open("r") as fp:
+                return rapidjson.load(fp, number_mode=rapidjson.NM_NATIVE)
+        return {}
+
+    def load_drawer_from_disk(self):
+        """
+        Load the instrument dictionary and metadata from disk.
+        """
+        if self.instrument_dictionary_path.is_file():
+            with self.instrument_dictionary_path.open("r") as fp:
+                self.instrument_dict = rapidjson.load(
+                    fp, number_mode=rapidjson.NM_NATIVE
+                )
+        else:
+            logger.info("No existing data drawer found. Starting from scratch.")
+
+    def load_metric_tracker_from_disk(self):
+        """
+        Load the metric tracker from disk if enabled in the configuration.
+        """
+        if self.freqai_info.get("write_metrics_to_disk", False):
+            if self.metric_tracker_path.is_file():
+                with self.metric_tracker_path.open("r") as fp:
+                    self.metric_tracker = rapidjson.load(
+                        fp, number_mode=rapidjson.NM_NATIVE
+                    )
+                logger.info("Metric tracker loaded from disk.")
+            else:
+                logger.info("No existing metric tracker found. Starting from scratch.")
+
+    def load_historic_predictions_from_disk(self) -> bool:
+        """
+        Load historic predictions from disk, falling back to a backup if necessary.
+
+        Returns:
+            bool: Whether the predictions were successfully loaded.
+        """
+        if self.historic_predictions_path.is_file():
+            try:
+                with self.historic_predictions_path.open("rb") as fp:
+                    self.historic_predictions = cloudpickle.load(fp)
+                logger.info("Historic predictions loaded successfully.")
+            except EOFError:
+                logger.warning("Corrupted predictions file. Attempting to load backup.")
+                with self.historic_predictions_bkp_path.open("rb") as fp:
+                    self.historic_predictions = cloudpickle.load(fp)
+                logger.warning("Backup predictions loaded successfully.")
+            return True
+        logger.info("No existing historic predictions found. Starting from scratch.")
+        return False
+
+    def save_historic_predictions_to_disk(self):
+        """
+        Save historic predictions to disk and create a backup.
+        """
+        with self.historic_predictions_path.open("wb") as fp:
+            cloudpickle.dump(
+                self.historic_predictions, fp, protocol=cloudpickle.DEFAULT_PROTOCOL
+            )
+        shutil.copy(self.historic_predictions_path, self.historic_predictions_bkp_path)
+
+    def save_metric_tracker_to_disk(self):
+        """
+        Save the metric tracker to disk.
+        """
+        with self.save_lock:
+            with self.metric_tracker_path.open("w") as fp:
+                rapidjson.dump(
+                    self.metric_tracker,
+                    fp,
+                    default=self.np_encoder,
+                    number_mode=rapidjson.NM_NATIVE,
+                )
+
+    def save_drawer_to_disk(self):
+        """
+        Save the instrument dictionary to disk.
+        """
+        with self.save_lock:
+            with self.instrument_dictionary_path.open("w") as fp:
+                rapidjson.dump(
+                    self.instrument_dict,
+                    fp,
+                    default=self.np_encoder,
+                    number_mode=rapidjson.NM_NATIVE,
+                )
+
+    def save_global_metadata_to_disk(self, metadata: Dict[str, Any]):
+        """
+        Save global metadata to disk.
+
+        Args:
+            metadata (dict): The metadata dictionary to save.
+        """
+        with self.save_lock:
+            with self.global_metadata_path.open("w") as fp:
+                rapidjson.dump(
+                    metadata,
+                    fp,
+                    default=self.np_encoder,
+                    number_mode=rapidjson.NM_NATIVE,
+                )
+
+    @staticmethod
+    def np_encoder(obj: Any) -> Any:
+        """
+        Encoder for NumPy data types to make them JSON serializable.
+
+        Args:
+            obj: The object to encode.
+
+        Returns:
+            Any: A JSON serializable representation.
+        """
+        if isinstance(obj, np.generic):
+            return obj.item()
