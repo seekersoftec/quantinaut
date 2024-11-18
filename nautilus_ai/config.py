@@ -170,7 +170,7 @@ class FeatureParameters:
     and models, providing flexibility for both hyperparameter tuning and environment-specific requirements.
     """
 
-    include_timeframes: List[str] =[]
+    include_timeframes: List[str] = []
     include_corr_pairlist: List[str] = []
     label_period_candles: int
     include_shifted_candles: int
@@ -205,7 +205,7 @@ class INautilusAIModelConfig(ActorConfig):
 
     --- General Configuration Parameters ---
 
-    train_period_days : PositiveInt, default 30
+    train_period_days : PositiveInt, default 0
         Number of days to use for training data (width of the sliding window).
     backtest_period_days : PositiveFloat, default 7.0
         Days to infer from the trained model before retraining in backtesting.
@@ -273,7 +273,7 @@ class INautilusAIModelConfig(ActorConfig):
     """
 
     # General configuration parameters
-    train_period_days: int = 30
+    train_period_days: int = 0
     backtest_period_days: int = 7
     identifier: str = "no_id_provided"
     live_retrain_hours: str
@@ -283,10 +283,10 @@ class INautilusAIModelConfig(ActorConfig):
     fit_live_predictions_candles: int
     continual_learning: bool = False
     write_metrics_to_disk: bool = False
-    data_kitchen_thread_count: int
+    data_kitchen_thread_count: int = 0
     activate_tensorboard: bool = True
     wait_for_training_iteration_on_reload: bool = True
-    
+
     model_save_type: str = "joblib"
 
     # Feature parameters
@@ -308,3 +308,4 @@ class INautilusAIModelConfig(ActorConfig):
     keras: bool = False
     conv_width: int = 2
     reduce_df_footprint: bool = False
+    extra_returns_per_train: dict = {}
