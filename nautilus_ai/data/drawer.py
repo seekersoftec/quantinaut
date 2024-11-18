@@ -66,7 +66,7 @@ class NautilusAIDataDrawer(Data):
     It provides functionality to load/save these resources to/from disk.
     """
 
-    def __init__(self, full_path: Path, config: INautilusAIModelConfig):
+    def __init__(self, full_path: Path, config: INautilusAIModelConfig, ts_init: int):
         """
         Initializes the NautilusAIDataDrawer.
 
@@ -77,6 +77,8 @@ class NautilusAIDataDrawer(Data):
 
         TODO: Find a better type instead of Instrument.
         """
+        super().__init__(ts_init=ts_init, ts_event=ts_init)
+
         self.full_path = full_path
         self.config = config
         self.nautilus_ai_info = config
