@@ -10,7 +10,7 @@
 - **Realistic Backtesting:** Simulates real-world conditions by incorporating self-adaptive retraining into the backtesting process.
 - **Flexible Framework:** Supports a wide range of machine learning algorithms and libraries, enabling users to experiment with different approaches.
 - **Robust Data Handling:** Implements advanced techniques for outlier detection, data normalization, and missing value imputation, ensuring data quality.
-- **Efficient Data Management:** Automatically downloads, cleans, and preprocesses historical data, streamlining the data preparation process.
+- **Efficient Data Management:** Automatically cleans and preprocesses historical data, streamlining the data preparation process.
 - **Dimensionality Reduction:** Reduces the complexity of the feature space, improving model performance and reducing computational costs.
 
 **Nautilus AI is inspired by FreqAI, which explains some of the similarities you might see.**
