@@ -250,7 +250,7 @@ class INautilusAIModelConfig(ActorConfig):
     --- Model Training Parameters ---
 
     model_training_parameters : FeatureParameters, optional
-        The parameters used to engineer the feature set. 
+        The parameters used to engineer the feature set.
 
     --- Reinforcement Learning Parameters ---
 
@@ -286,6 +286,8 @@ class INautilusAIModelConfig(ActorConfig):
     data_kitchen_thread_count: int
     activate_tensorboard: bool = True
     wait_for_training_iteration_on_reload: bool = True
+    
+    model_save_type: str = "joblib"
 
     # Feature parameters
     feature_parameters: FeatureParameters = FeatureParameters()
