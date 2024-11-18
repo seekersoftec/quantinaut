@@ -170,7 +170,7 @@ class FeatureParameters:
     and models, providing flexibility for both hyperparameter tuning and environment-specific requirements.
     """
 
-    include_timeframes: List[str]
+    include_timeframes: List[str] =[]
     include_corr_pairlist: List[str] = []
     label_period_candles: int
     include_shifted_candles: int
