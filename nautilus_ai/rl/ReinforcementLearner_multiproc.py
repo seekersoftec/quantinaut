@@ -9,7 +9,7 @@ from stable_baselines3.common.vec_env import SubprocVecEnv, VecMonitor
 from nautilus_ai.data import NautilusAIDataKitchen
 from nautilus_ai.rl.ReinforcementLearner import ReinforcementLearner
 from nautilus_ai.rl.BaseReinforcementLearningModel import make_env
-from nautilus_ai.tensorboard.TensorboardCallback import TensorboardCallback
+from nautilus_ai.tensorboard.tensorboard_callback import TensorboardCallback
 
 
 logger = Logger(__name__)
