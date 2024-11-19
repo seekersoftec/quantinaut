@@ -14,7 +14,7 @@ from nautilus_ai.torch.model_trainer import PyTorchModelTrainer
 
 class PyTorchMLPRegressor(BasePyTorchRegressor):
     """
-    This class implements the fit method of IFreqaiModel.
+    This class implements the fit method of INautilusAIModel.
     in the fit method we initialize the model and trainer objects.
     the only requirement from the model is to be aligned to PyTorchRegressor
     predict method that expects the model to predict tensor of type float.

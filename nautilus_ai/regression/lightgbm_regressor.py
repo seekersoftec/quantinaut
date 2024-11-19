@@ -13,7 +13,7 @@ logger = Logger(__name__)
 
 class LightGBMRegressor(BaseRegressionModel):
     """
-    User created prediction model. The class inherits IFreqaiModel, which
+    User created prediction model. The class inherits INautilusAIModel, which
     means it has full access to all Frequency AI functionality. Typically,
     users would use this to override the common `fit()`, `train()`, or
     `predict()` methods to add their custom data handling tools or change
@@ -33,7 +33,9 @@ class LightGBMRegressor(BaseRegressionModel):
             eval_set = None
             eval_weights = None
         else:
-            eval_set = [(data_dictionary["test_features"], data_dictionary["test_labels"])]
+            eval_set = [
+                (data_dictionary["test_features"], data_dictionary["test_labels"])
+            ]
             eval_weights = data_dictionary["test_weights"]
         X = data_dictionary["train_features"]
         y = data_dictionary["train_labels"]
