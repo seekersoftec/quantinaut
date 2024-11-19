@@ -1,9 +1,9 @@
 import logging
 from typing import Any
 
-from xgboost import XGBRegressor
+from xgboost import XGBRFRegressor
 
-from nautilus_ai.BaseRegressionModel import BaseRegressionModel
+from nautilus_ai.regression.base_regression_model import BaseRegressionModel
 from nautilus_ai.data import NautilusAIDataKitchen
 from nautilus_ai.tensorboard import TBCallback
 
@@ -11,7 +11,7 @@ from nautilus_ai.tensorboard import TBCallback
 logger = Logger(__name__)
 
 
-class XGBoostRegressor(BaseRegressionModel):
+class XGBoostRFRegressor(BaseRegressionModel):
     """
     User created prediction model. The class inherits IFreqaiModel, which
     means it has full access to all Frequency AI functionality. Typically,
@@ -36,14 +36,16 @@ class XGBoostRegressor(BaseRegressionModel):
             eval_set = None
             eval_weights = None
         else:
-            eval_set = [(data_dictionary["test_features"], data_dictionary["test_labels"]), (X, y)]
-            eval_weights = [data_dictionary["test_weights"], data_dictionary["train_weights"]]
+            eval_set = [
+                (data_dictionary["test_features"], data_dictionary["test_labels"])
+            ]
+            eval_weights = [data_dictionary["test_weights"]]
 
         sample_weight = data_dictionary["train_weights"]
 
         xgb_model = self.get_init_model(dk.pair)
 
-        model = XGBRegressor(**self.model_training_parameters)
+        model = XGBRFRegressor(**self.model_training_parameters)
 
         model.set_params(callbacks=[TBCallback(dk.data_path)])
         model.fit(

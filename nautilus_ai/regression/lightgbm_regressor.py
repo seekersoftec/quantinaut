@@ -3,7 +3,7 @@ from typing import Any
 
 from lightgbm import LGBMRegressor
 
-from nautilus_ai.regression.BaseRegressionModel import BaseRegressionModel
+from nautilus_ai.regression.base_regression_model import BaseRegressionModel
 from nautilus_ai.data import NautilusAIDataKitchen
 
 
