@@ -9,6 +9,8 @@ from gymnasium import spaces
 from gymnasium.utils import seeding
 from pandas import DataFrame
 
+from nautilus_ai.config import INautilusAIModelConfig
+from nautilus_trader.model.instruments import Instrument
 from nautilus_ai.common import Logger
 from nautilus_ai.exceptions import OperationalException
 
@@ -18,9 +20,9 @@ logger = Logger(__name__)
 
 class BaseActions(Enum):
     """
-    Default action space, mostly used for type handling.
+    Defines the default action space for the environment. 
+    The actions represent basic trading operations for an agent in a financial market.
     """
-
     Neutral = 0
     Long_enter = 1
     Long_exit = 2
@@ -29,11 +31,19 @@ class BaseActions(Enum):
 
 
 class Positions(Enum):
+    """
+    Represents the current position of the agent in the market. 
+    Possible positions include:
+    - Short: The agent is betting on a price decline.
+    - Long: The agent is betting on a price increase.
+    - Neutral: The agent is not holding any position.
+    """
     Short = 0
     Long = 1
     Neutral = 0.5
 
     def opposite(self):
+        """Returns the opposite position."""
         return Positions.Short if self == Positions.Long else Positions.Long
 
 
@@ -57,7 +67,7 @@ class BaseEnvironment(gym.Env):
         live: bool = False,
         fee: float = 0.0015,
         can_short: bool = False,
-        pair: str = "",
+        instrument: Instrument = "",
         df_raw: DataFrame = DataFrame(),
     ):
         """
@@ -80,7 +90,7 @@ class BaseEnvironment(gym.Env):
         self.id: str = id
         self.max_drawdown: float = 1 - self.rl_config.get("max_training_drawdown_pct", 0.8)
         self.compound_trades: bool = config["stake_amount"] == "unlimited"
-        self.pair: str = pair
+        self.instrument: Instrument = instrument
         self.raw_features: DataFrame = df_raw
         if self.config.get("fee", None) is not None:
             self.fee = self.config["fee"]
@@ -383,35 +393,35 @@ class BaseEnvironment(gym.Env):
 
     # Keeping around in case we want to start building more complex environment
     # templates in the future.
-    # def most_recent_return(self):
-    #     """
-    #     Calculate the tick to tick return if in a trade.
-    #     Return is generated from rising prices in Long
-    #     and falling prices in Short positions.
-    #     The actions Sell/Buy or Hold during a Long position trigger the sell/buy-fee.
-    #     """
-    #     # Long positions
-    #     if self._position == Positions.Long:
-    #         current_price = self.prices.iloc[self._current_tick].open
-    #         previous_price = self.prices.iloc[self._current_tick - 1].open
+    def most_recent_return(self):
+        """
+        Calculate the tick to tick return if in a trade.
+        Return is generated from rising prices in Long
+        and falling prices in Short positions.
+        The actions Sell/Buy or Hold during a Long position trigger the sell/buy-fee.
+        """
+        # Long positions
+        if self._position == Positions.Long:
+            current_price = self.prices.iloc[self._current_tick].open
+            previous_price = self.prices.iloc[self._current_tick - 1].open
 
-    #         if (self._position_history[self._current_tick - 1] == Positions.Short
-    #                 or self._position_history[self._current_tick - 1] == Positions.Neutral):
-    #             previous_price = self.add_entry_fee(previous_price)
+            if (self._position_history[self._current_tick - 1] == Positions.Short
+                    or self._position_history[self._current_tick - 1] == Positions.Neutral):
+                previous_price = self.add_entry_fee(previous_price)
 
-    #         return np.log(current_price) - np.log(previous_price)
+            return np.log(current_price) - np.log(previous_price)
 
-    #     # Short positions
-    #     if self._position == Positions.Short:
-    #         current_price = self.prices.iloc[self._current_tick].open
-    #         previous_price = self.prices.iloc[self._current_tick - 1].open
-    #         if (self._position_history[self._current_tick - 1] == Positions.Long
-    #                 or self._position_history[self._current_tick - 1] == Positions.Neutral):
-    #             previous_price = self.add_exit_fee(previous_price)
+        # Short positions
+        if self._position == Positions.Short:
+            current_price = self.prices.iloc[self._current_tick].open
+            previous_price = self.prices.iloc[self._current_tick - 1].open
+            if (self._position_history[self._current_tick - 1] == Positions.Long
+                    or self._position_history[self._current_tick - 1] == Positions.Neutral):
+                previous_price = self.add_exit_fee(previous_price)
 
-    #         return np.log(previous_price) - np.log(current_price)
+            return np.log(previous_price) - np.log(current_price)
 
-    #     return 0
+        return 0
 
-    # def update_portfolio_log_returns(self, action):
-    #     self.portfolio_log_returns[self._current_tick] = self.most_recent_return(action)
+    def update_portfolio_log_returns(self, action):
+        self.portfolio_log_returns[self._current_tick] = self.most_recent_return(action)

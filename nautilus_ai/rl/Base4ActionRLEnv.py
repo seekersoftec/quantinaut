@@ -3,7 +3,7 @@ from enum import Enum
 
 from gymnasium import spaces
 
-from nautilus_ai.rl.BaseEnvironment import BaseEnvironment, Positions
+from nautilus_ai.rl.base_environment import BaseEnvironment, Positions
 
 
 logger = Logger(__name__)

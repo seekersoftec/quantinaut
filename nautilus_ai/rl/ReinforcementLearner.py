@@ -8,7 +8,7 @@ from stable_baselines3.common.callbacks import ProgressBarCallback
 from nautilus_ai.common import Logger
 from nautilus_ai.data import NautilusAIDataKitchen
 from nautilus_ai.rl.Base5ActionRLEnv import Actions, Base5ActionRLEnv, Positions
-from nautilus_ai.rl.BaseEnvironment import BaseEnvironment
+from nautilus_ai.rl.base_environment import BaseEnvironment
 from nautilus_ai.rl.BaseReinforcementLearningModel import BaseReinforcementLearningModel
 
 

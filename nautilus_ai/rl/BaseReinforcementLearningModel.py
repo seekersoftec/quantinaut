@@ -24,7 +24,7 @@ from nautilus_ai.exceptions import OperationalException
 from nautilus_ai.data import NautilusAIDataKitchen
 from nautilus_ai.freqai_interface import IFreqaiModel
 from nautilus_ai.rl.Base5ActionRLEnv import Actions, Base5ActionRLEnv
-from nautilus_ai.rl.BaseEnvironment import BaseActions, BaseEnvironment, Positions
+from nautilus_ai.rl.base_environment import BaseActions, BaseEnvironment, Positions
 from nautilus_ai.tensorboard.tensorboard_callback import TensorboardCallback
 from nautilus_ai.persistence import Trade
 
