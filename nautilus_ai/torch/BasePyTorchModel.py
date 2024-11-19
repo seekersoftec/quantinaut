@@ -27,7 +27,7 @@ class BasePyTorchModel(INautilusAIModel, ABC):
         super().__init__(config=kwargs["config"])
 
         # Model-specific attributes
-        self.dd.model_type = "pytorch"  # Specify the model type as PyTorch.
+        self.data_drawer.model_type = "pytorch"  # Specify the model type as PyTorch.
         self.device = self._determine_device()
 
         # Data split configuration
