@@ -1,10 +1,12 @@
-import logging
 from typing import Any
 
 from lightgbm import LGBMClassifier
 
-from nautilus_ai.BaseClassifierModel import BaseClassifierModel
-from nautilus_ai.MultiOutputClassifier import FreqaiMultiOutputClassifier
+from nautilus_ai.common import Logger
+from nautilus_ai.classification.base_model import BaseClassifierModel
+from nautilus_ai.classification.multioutput_classifier import (
+    NautilusAIMultiOutputClassifier,
+)
 from nautilus_ai.data import NautilusAIDataKitchen
 
 
@@ -13,7 +15,7 @@ logger = Logger(__name__)
 
 class LightGBMClassifierMultiTarget(BaseClassifierModel):
     """
-    User created prediction model. The class inherits IFreqaiModel, which
+    User created prediction model. The class inherits INautilusAIModel, which
     means it has full access to all Frequency AI functionality. Typically,
     users would use this to override the common `fit()`, `train()`, or
     `predict()` methods to add their custom data handling tools or change
@@ -63,7 +65,7 @@ class LightGBMClassifierMultiTarget(BaseClassifierModel):
                 }
             )
 
-        model = FreqaiMultiOutputClassifier(estimator=lgb)
+        model = NautilusAIMultiOutputClassifier(estimator=lgb)
         thread_training = self.freqai_info.get("multitarget_parallel_training", False)
         if thread_training:
             model.n_jobs = y.shape[1]

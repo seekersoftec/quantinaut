@@ -2,7 +2,7 @@ from typing import Any
 
 import torch
 
-from nautilus_ai.BasePyTorchClassifier import BasePyTorchClassifier
+from nautilus_ai.classification.base_pytorch_classifier import BasePyTorchClassifier
 from nautilus_ai.data import NautilusAIDataKitchen
 from nautilus_ai.torch.data_convertor import (
     DefaultPyTorchDataConvertor,
@@ -14,7 +14,7 @@ from nautilus_ai.torch.model_trainer import PyTorchModelTrainer
 
 class PyTorchMLPClassifier(BasePyTorchClassifier):
     """
-    This class implements the fit method of IFreqaiModel.
+    This class implements the fit method of INautilusAIModel.
     in the fit method we initialize the model and trainer objects.
     the only requirement from the model is to be aligned to PyTorchClassifier
     predict method that expects the model to predict a tensor of type long.

@@ -1,4 +1,3 @@
-import logging
 from typing import Any
 
 import numpy as np
@@ -7,18 +6,19 @@ import pandas as pd
 from pandas import DataFrame
 from pandas.api.types import is_integer_dtype
 from sklearn.preprocessing import LabelEncoder
-from xgboost import XGBRFClassifier
+from xgboost import XGBClassifier
 
-from nautilus_ai.BaseClassifierModel import BaseClassifierModel
+from nautilus_ai.common import Logger
+from nautilus_ai.classification.base_model import BaseClassifierModel
 from nautilus_ai.data import NautilusAIDataKitchen
 
 
 logger = Logger(__name__)
 
 
-class XGBoostRFClassifier(BaseClassifierModel):
+class XGBoostClassifier(BaseClassifierModel):
     """
-    User created prediction model. The class inherits IFreqaiModel, which
+    User created prediction model. The class inherits INautilusAIModel, which
     means it has full access to all Frequency AI functionality. Typically,
     users would use this to override the common `fit()`, `train()`, or
     `predict()` methods to add their custom data handling tools or change
@@ -56,9 +56,15 @@ class XGBoostRFClassifier(BaseClassifierModel):
 
         init_model = self.get_init_model(dk.pair)
 
-        model = XGBRFClassifier(**self.model_training_parameters)
+        model = XGBClassifier(**self.model_training_parameters)
 
-        model.fit(X=X, y=y, eval_set=eval_set, sample_weight=train_weights, xgb_model=init_model)
+        model.fit(
+            X=X,
+            y=y,
+            eval_set=eval_set,
+            sample_weight=train_weights,
+            xgb_model=init_model,
+        )
 
         return model
 
@@ -67,7 +73,7 @@ class XGBoostRFClassifier(BaseClassifierModel):
     ) -> tuple[DataFrame, npt.NDArray[np.int_]]:
         """
         Filter the prediction features data and predict with it.
-        :param  unfiltered_df: Full dataframe for the current backtest period.
+        :param unfiltered_df: Full dataframe for the current backtest period.
         :return:
         :pred_df: dataframe containing the predictions
         :do_predict: np.array of 1s and 0s to indicate places where freqai needed to remove
@@ -82,7 +88,9 @@ class XGBoostRFClassifier(BaseClassifierModel):
         labels_after = le.fit_transform(labels_before).tolist()
         pred_df[label] = le.inverse_transform(pred_df[label])
         pred_df = pred_df.rename(
-            columns={labels_after[i]: labels_before[i] for i in range(len(labels_before))}
+            columns={
+                labels_after[i]: labels_before[i] for i in range(len(labels_before))
+            }
         )
 
         return (pred_df, dk.do_predict)

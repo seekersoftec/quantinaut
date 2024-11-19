@@ -1,4 +1,3 @@
-import logging
 from time import time
 from typing import Any
 
@@ -9,8 +8,9 @@ import torch
 from pandas import DataFrame
 from torch.nn import functional as F
 
+from nautilus_ai.common import Logger
 from nautilus_ai.exceptions import OperationalException
-from nautilus_ai.BasePyTorchModel import BasePyTorchModel
+from nautilus_ai.torch.base_model import BasePyTorchModel
 from nautilus_ai.data import NautilusAIDataKitchen
 
 

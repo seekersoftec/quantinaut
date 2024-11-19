@@ -1,9 +1,9 @@
-import logging
 from typing import Any
 
 from lightgbm import LGBMClassifier
 
-from nautilus_ai.BaseClassifierModel import BaseClassifierModel
+from nautilus_ai.common import Logger
+from nautilus_ai.classification.base_model import BaseClassifierModel
 from nautilus_ai.data import NautilusAIDataKitchen
 
 
@@ -12,7 +12,7 @@ logger = Logger(__name__)
 
 class LightGBMClassifier(BaseClassifierModel):
     """
-    User created prediction model. The class inherits IFreqaiModel, which
+    User created prediction model. The class inherits INautilusAIModel, which
     means it has full access to all Frequency AI functionality. Typically,
     users would use this to override the common `fit()`, `train()`, or
     `predict()` methods to add their custom data handling tools or change

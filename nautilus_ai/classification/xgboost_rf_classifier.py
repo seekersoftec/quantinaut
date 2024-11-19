@@ -1,22 +1,24 @@
-import logging
 from typing import Any
 
 import numpy as np
 import numpy.typing as npt
+import pandas as pd
 from pandas import DataFrame
-from sklearn.ensemble import RandomForestClassifier
+from pandas.api.types import is_integer_dtype
 from sklearn.preprocessing import LabelEncoder
+from xgboost import XGBRFClassifier
 
-from nautilus_ai.BaseClassifierModel import BaseClassifierModel
+from nautilus_ai.common import Logger
+from nautilus_ai.classification.base_model import BaseClassifierModel
 from nautilus_ai.data import NautilusAIDataKitchen
 
 
 logger = Logger(__name__)
 
 
-class SKLearnRandomForestClassifier(BaseClassifierModel):
+class XGBoostRFClassifier(BaseClassifierModel):
     """
-    User created prediction model. The class inherits IFreqaiModel, which
+    User created prediction model. The class inherits INautilusAIModel, which
     means it has full access to all Frequency AI functionality. Typically,
     users would use this to override the common `fit()`, `train()`, or
     `predict()` methods to add their custom data handling tools or change
@@ -35,27 +37,34 @@ class SKLearnRandomForestClassifier(BaseClassifierModel):
         X = data_dictionary["train_features"].to_numpy()
         y = data_dictionary["train_labels"].to_numpy()[:, 0]
 
+        le = LabelEncoder()
+        if not is_integer_dtype(y):
+            y = pd.Series(le.fit_transform(y), dtype="int64")
+
         if self.freqai_info.get("data_split_parameters", {}).get("test_size", 0.1) == 0:
             eval_set = None
         else:
             test_features = data_dictionary["test_features"].to_numpy()
             test_labels = data_dictionary["test_labels"].to_numpy()[:, 0]
 
-            eval_set = (test_features, test_labels)
+            if not is_integer_dtype(test_labels):
+                test_labels = pd.Series(le.transform(test_labels), dtype="int64")
 
-        if self.freqai_info.get("continual_learning", False):
-            logger.warning(
-                "Continual learning is not supported for "
-                "SKLearnRandomForestClassifier, ignoring."
-            )
+            eval_set = [(test_features, test_labels)]
 
         train_weights = data_dictionary["train_weights"]
 
-        model = RandomForestClassifier(**self.model_training_parameters)
+        init_model = self.get_init_model(dk.pair)
 
-        model.fit(X=X, y=y, sample_weight=train_weights)
-        if eval_set:
-            logger.info("Score: %s", model.score(eval_set[0], eval_set[1]))
+        model = XGBRFClassifier(**self.model_training_parameters)
+
+        model.fit(
+            X=X,
+            y=y,
+            eval_set=eval_set,
+            sample_weight=train_weights,
+            xgb_model=init_model,
+        )
 
         return model
 
@@ -79,7 +88,9 @@ class SKLearnRandomForestClassifier(BaseClassifierModel):
         labels_after = le.fit_transform(labels_before).tolist()
         pred_df[label] = le.inverse_transform(pred_df[label])
         pred_df = pred_df.rename(
-            columns={labels_after[i]: labels_before[i] for i in range(len(labels_before))}
+            columns={
+                labels_after[i]: labels_before[i] for i in range(len(labels_before))
+            }
         )
 
         return (pred_df, dk.do_predict)
