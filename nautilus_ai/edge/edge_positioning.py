@@ -1,7 +1,6 @@
 # pragma pylint: disable=W0603
 """Edge positioning package"""
 
-import logging
 from collections import defaultdict
 from copy import deepcopy
 from datetime import timedelta
@@ -11,6 +10,7 @@ import numpy as np
 import utils_find_1st as utf1st
 from pandas import DataFrame
 
+from nautilus_ai.common import Logger
 from nautilus_ai.configuration import TimeRange
 from nautilus_ai.constants import DATETIME_PRINT_FORMAT, UNLIMITED_STAKE_AMOUNT, Config
 from nautilus_ai.data.history import get_timerange, load_data, refresh_data
