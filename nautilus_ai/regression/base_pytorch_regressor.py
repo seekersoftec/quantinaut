@@ -1,4 +1,3 @@
-import logging
 from time import time
 from typing import Any
 
@@ -6,7 +5,8 @@ import numpy as np
 import numpy.typing as npt
 from pandas import DataFrame
 
-from nautilus_ai.BasePyTorchModel import BasePyTorchModel
+from nautilus_ai.common import Logger
+from nautilus_ai.torch.base_model import BasePyTorchModel
 from nautilus_ai.data import NautilusAIDataKitchen
 
 

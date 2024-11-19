@@ -3,7 +3,7 @@ from typing import Any
 
 from xgboost import XGBRegressor
 
-from nautilus_ai.regression.base_regression_model import BaseRegressionModel
+from nautilus_ai.regression.base_model import BaseRegressionModel
 from nautilus_ai.data import NautilusAIDataKitchen
 from nautilus_ai.tensorboard import TBCallback
 

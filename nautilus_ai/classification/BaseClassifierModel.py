@@ -1,4 +1,3 @@
-import logging
 from time import time
 from typing import Any
 
@@ -7,21 +6,24 @@ import numpy.typing as npt
 import pandas as pd
 from pandas import DataFrame
 
+from nautilus_ai.common import Logger
 from nautilus_ai.data import NautilusAIDataKitchen
-from nautilus_ai.freqai_interface import IFreqaiModel
+from nautilus_ai.interface import INautilusAIModel
 
 
 logger = Logger(__name__)
 
 
-class BaseClassifierModel(IFreqaiModel):
+class BaseClassifierModel(INautilusAIModel):
     """
     Base class for regression type models (e.g. Catboost, LightGBM, XGboost etc.).
     User *must* inherit from this class and set fit(). See example scripts
     such as prediction_models/CatboostClassifier.py for guidance.
     """
 
-    def train(self, unfiltered_df: DataFrame, pair: str, dk: NautilusAIDataKitchen, **kwargs) -> Any:
+    def train(
+        self, unfiltered_df: DataFrame, pair: str, dk: NautilusAIDataKitchen, **kwargs
+    ) -> Any:
         """
         Filter the training data and train a model to it. Train makes heavy use of the datakitchen
         for storing, saving, loading, and analyzing the data.
@@ -31,7 +33,9 @@ class BaseClassifierModel(IFreqaiModel):
         :model: Trained model which can be used to inference (self.predict)
         """
 
-        logger.info(f"-------------------- Starting training {pair} --------------------")
+        logger.info(
+            f"-------------------- Starting training {pair} --------------------"
+        )
 
         start_time = time()
 
@@ -103,8 +107,10 @@ class BaseClassifierModel(IFreqaiModel):
 
         dk.data_dictionary["prediction_features"] = filtered_df
 
-        dk.data_dictionary["prediction_features"], outliers, _ = dk.feature_pipeline.transform(
-            dk.data_dictionary["prediction_features"], outlier_check=True
+        dk.data_dictionary["prediction_features"], outliers, _ = (
+            dk.feature_pipeline.transform(
+                dk.data_dictionary["prediction_features"], outlier_check=True
+            )
         )
 
         predictions = self.model.predict(dk.data_dictionary["prediction_features"])
@@ -113,9 +119,13 @@ class BaseClassifierModel(IFreqaiModel):
 
         pred_df = DataFrame(predictions, columns=dk.label_list)
 
-        predictions_prob = self.model.predict_proba(dk.data_dictionary["prediction_features"])
+        predictions_prob = self.model.predict_proba(
+            dk.data_dictionary["prediction_features"]
+        )
         if self.CONV_WIDTH == 1:
-            predictions_prob = np.reshape(predictions_prob, (-1, len(self.model.classes_)))
+            predictions_prob = np.reshape(
+                predictions_prob, (-1, len(self.model.classes_))
+            )
         pred_df_prob = DataFrame(predictions_prob, columns=self.model.classes_)
 
         pred_df = pd.concat([pred_df, pred_df_prob], axis=1)
