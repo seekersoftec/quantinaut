@@ -22,7 +22,7 @@ from stable_baselines3.common.vec_env import SubprocVecEnv, VecMonitor
 
 from nautilus_ai.exceptions import OperationalException
 from nautilus_ai.data import NautilusAIDataKitchen
-from nautilus_ai.freqai_interface import IFreqaiModel
+from nautilus_ai.freqai_interface import INautilusAIModel
 from nautilus_ai.rl.Base5ActionRLEnv import Actions, Base5ActionRLEnv
 from nautilus_ai.rl.base_environment import BaseActions, BaseEnvironment, Positions
 from nautilus_ai.tensorboard.tensorboard_callback import TensorboardCallback
@@ -37,7 +37,7 @@ SB3_MODELS = ["PPO", "A2C", "DQN"]
 SB3_CONTRIB_MODELS = ["TRPO", "ARS", "RecurrentPPO", "MaskablePPO", "QRDQN"]
 
 
-class BaseReinforcementLearningModel(IFreqaiModel):
+class BaseReinforcementLearningModel(INautilusAIModel):
     """
     User created Reinforcement Learning Model prediction class
     """
@@ -91,12 +91,18 @@ class BaseReinforcementLearningModel(IFreqaiModel):
             logger.warning("User tried to use DBSCAN with RL. Deactivating DBSCAN.")
         if self.ft_params.get("DI_threshold", False):
             self.ft_params.update({"DI_threshold": False})
-            logger.warning("User tried to use DI_threshold with RL. Deactivating DI_threshold.")
+            logger.warning(
+                "User tried to use DI_threshold with RL. Deactivating DI_threshold."
+            )
         if self.freqai_info["data_split_parameters"].get("shuffle", False):
             self.freqai_info["data_split_parameters"].update({"shuffle": False})
-            logger.warning("User tried to shuffle training data. Setting shuffle to False")
+            logger.warning(
+                "User tried to shuffle training data. Setting shuffle to False"
+            )
 
-    def train(self, unfiltered_df: DataFrame, pair: str, dk: NautilusAIDataKitchen, **kwargs) -> Any:
+    def train(
+        self, unfiltered_df: DataFrame, pair: str, dk: NautilusAIDataKitchen, **kwargs
+    ) -> Any:
         """
         Filter the training data and train a model to it. Train makes heavy use of the datakitchen
         for storing, saving, loading, and analyzing the data.
@@ -106,7 +112,9 @@ class BaseReinforcementLearningModel(IFreqaiModel):
         :model: Trained model which can be used to inference (self.predict)
         """
 
-        logger.info(f"--------------------Starting training {pair} --------------------")
+        logger.info(
+            f"--------------------Starting training {pair} --------------------"
+        )
 
         features_filtered, labels_filtered = dk.filter_features(
             unfiltered_df,
@@ -115,12 +123,16 @@ class BaseReinforcementLearningModel(IFreqaiModel):
             training_filter=True,
         )
 
-        dd: dict[str, Any] = dk.make_train_test_datasets(features_filtered, labels_filtered)
+        dd: dict[str, Any] = dk.make_train_test_datasets(
+            features_filtered, labels_filtered
+        )
         self.df_raw = copy.deepcopy(dd["train_features"])
         dk.fit_labels()  # FIXME useless for now, but just satiating append methods
 
         # normalize all data based on train_dataset only
-        prices_train, prices_test = self.build_ohlc_price_dataframes(dk.data_dictionary, pair, dk)
+        prices_train, prices_test = self.build_ohlc_price_dataframes(
+            dk.data_dictionary, pair, dk
+        )
 
         dk.feature_pipeline = self.define_data_pipeline(threads=dk.thread_count)
 
@@ -171,14 +183,18 @@ class BaseReinforcementLearningModel(IFreqaiModel):
         env_info = self.pack_env_dict(dk.pair)
 
         self.train_env = self.MyRLEnv(df=train_df, prices=prices_train, **env_info)
-        self.eval_env = Monitor(self.MyRLEnv(df=test_df, prices=prices_test, **env_info))
+        self.eval_env = Monitor(
+            self.MyRLEnv(df=test_df, prices=prices_test, **env_info)
+        )
         self.eval_callback = MaskableEvalCallback(
             self.eval_env,
             deterministic=True,
             render=False,
             eval_freq=len(train_df),
             best_model_save_path=str(dk.data_path),
-            use_masking=(self.model_type == "MaskablePPO" and is_masking_supported(self.eval_env)),
+            use_masking=(
+                self.model_type == "MaskablePPO" and is_masking_supported(self.eval_env)
+            ),
         )
 
         actions = self.train_env.get_actions()
@@ -240,7 +256,9 @@ class BaseReinforcementLearningModel(IFreqaiModel):
                     )
 
                 now = datetime.now(timezone.utc).timestamp()
-                trade_duration = int((now - trade.open_date_utc.timestamp()) / self.base_tf_seconds)
+                trade_duration = int(
+                    (now - trade.open_date_utc.timestamp()) / self.base_tf_seconds
+                )
                 current_profit = trade.calc_profit_ratio(current_rate)
                 if trade.is_short:
                     market_side = 0
@@ -266,13 +284,17 @@ class BaseReinforcementLearningModel(IFreqaiModel):
             unfiltered_df, dk.training_features_list, training_filter=False
         )
 
-        dk.data_dictionary["prediction_features"] = self.drop_ohlc_from_df(filtered_dataframe, dk)
+        dk.data_dictionary["prediction_features"] = self.drop_ohlc_from_df(
+            filtered_dataframe, dk
+        )
 
         dk.data_dictionary["prediction_features"], _, _ = dk.feature_pipeline.transform(
             dk.data_dictionary["prediction_features"], outlier_check=True
         )
 
-        pred_df = self.rl_model_predict(dk.data_dictionary["prediction_features"], dk, self.model)
+        pred_df = self.rl_model_predict(
+            dk.data_dictionary["prediction_features"], dk, self.model
+        )
         pred_df.fillna(0, inplace=True)
 
         return (pred_df, dk.do_predict)
@@ -291,7 +313,9 @@ class BaseReinforcementLearningModel(IFreqaiModel):
         def _predict(window):
             observations = dataframe.iloc[window.index]
             if self.live and self.rl_config.get("add_state_info", False):
-                market_side, current_profit, trade_duration = self.get_state_info(dk.pair)
+                market_side, current_profit, trade_duration = self.get_state_info(
+                    dk.pair
+                )
                 observations["current_profit_pct"] = current_profit
                 observations["position"] = market_side
                 observations["trade_duration"] = trade_duration
@@ -470,13 +494,17 @@ class BaseReinforcementLearningModel(IFreqaiModel):
             # close long
             if action == Actions.Long_exit.value and self._position == Positions.Long:
                 if pnl > self.profit_aim * self.rr:
-                    factor *= self.rl_config["model_reward_parameters"].get("win_reward_factor", 2)
+                    factor *= self.rl_config["model_reward_parameters"].get(
+                        "win_reward_factor", 2
+                    )
                 return float(pnl * factor)
 
             # close short
             if action == Actions.Short_exit.value and self._position == Positions.Short:
                 if pnl > self.profit_aim * self.rr:
-                    factor *= self.rl_config["model_reward_parameters"].get("win_reward_factor", 2)
+                    factor *= self.rl_config["model_reward_parameters"].get(
+                        "win_reward_factor", 2
+                    )
                 return float(pnl * factor)
 
             return 0.0
@@ -503,7 +531,9 @@ def make_env(
     """
 
     def _init() -> gym.Env:
-        env = MyRLEnv(df=train_df, prices=price, id=env_id, seed=seed + rank, **env_info)
+        env = MyRLEnv(
+            df=train_df, prices=price, id=env_id, seed=seed + rank, **env_info
+        )
 
         return env
 
