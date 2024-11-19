@@ -4,12 +4,12 @@ import torch
 
 from nautilus_ai.BasePyTorchClassifier import BasePyTorchClassifier
 from nautilus_ai.data import NautilusAIDataKitchen
-from nautilus_ai.torch.PyTorchDataConvertor import (
+from nautilus_ai.torch.data_convertor import (
     DefaultPyTorchDataConvertor,
     PyTorchDataConvertor,
 )
-from nautilus_ai.torch.PyTorchMLPModel import PyTorchMLPModel
-from nautilus_ai.torch.PyTorchModelTrainer import PyTorchModelTrainer
+from nautilus_ai.torch.mlp_model import PyTorchMLPModel
+from nautilus_ai.torch.model_trainer import PyTorchModelTrainer
 
 
 class PyTorchMLPClassifier(BasePyTorchClassifier):

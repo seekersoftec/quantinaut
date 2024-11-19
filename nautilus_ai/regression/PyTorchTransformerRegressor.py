@@ -7,12 +7,12 @@ import torch
 
 from nautilus_ai.BasePyTorchRegressor import BasePyTorchRegressor
 from nautilus_ai.data import NautilusAIDataKitchen
-from nautilus_ai.torch.PyTorchDataConvertor import (
+from nautilus_ai.torch.data_convertor import (
     DefaultPyTorchDataConvertor,
     PyTorchDataConvertor,
 )
-from nautilus_ai.torch.PyTorchModelTrainer import PyTorchTransformerTrainer
-from nautilus_ai.torch.PyTorchTransformerModel import PyTorchTransformerModel
+from nautilus_ai.torch.model_trainer import PyTorchTransformerTrainer
+from nautilus_ai.torch.transformer_model import PyTorchTransformerModel
 
 
 class PyTorchTransformerRegressor(BasePyTorchRegressor):

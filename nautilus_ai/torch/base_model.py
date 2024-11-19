@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import torch
 from nautilus_ai.common import Logger
 from nautilus_ai.interface import INautilusAIModel
-from nautilus_ai.torch.PyTorchDataConvertor import PyTorchDataConvertor
+from nautilus_ai.torch.data_convertor import PyTorchDataConvertor
 
 logger = Logger(__name__)
 
