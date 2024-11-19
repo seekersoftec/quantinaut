@@ -3,8 +3,9 @@ from typing import Any
 
 from lightgbm import LGBMRegressor
 
+from nautilus_ai.common import Logger
 from nautilus_ai.regression.base_model import BaseRegressionModel
-from nautilus_ai.MultiOutputRegressor import FreqaiMultiOutputRegressor
+from nautilus_ai.regression.multioutput_regressor import NautilusAIMultiOutputRegressor
 from nautilus_ai.data import NautilusAIDataKitchen
 
 
@@ -65,7 +66,7 @@ class LightGBMRegressorMultiTarget(BaseRegressionModel):
                 }
             )
 
-        model = FreqaiMultiOutputRegressor(estimator=lgb)
+        model = NautilusAIMultiOutputRegressor(estimator=lgb)
         thread_training = self.freqai_info.get("multitarget_parallel_training", False)
         if thread_training:
             model.n_jobs = y.shape[1]

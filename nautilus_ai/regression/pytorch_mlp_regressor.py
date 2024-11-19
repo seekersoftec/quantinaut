@@ -2,7 +2,7 @@ from typing import Any
 
 import torch
 
-from nautilus_ai.BasePyTorchRegressor import BasePyTorchRegressor
+from nautilus_ai.regression.base_pytorch_regressor import BasePyTorchRegressor
 from nautilus_ai.data import NautilusAIDataKitchen
 from nautilus_ai.torch.data_convertor import (
     DefaultPyTorchDataConvertor,
