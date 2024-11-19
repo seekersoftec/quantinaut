@@ -1,18 +1,18 @@
-import logging
 from typing import Any
 
 from pandas import DataFrame
+from nautilus_ai.common import Logger
 from sb3_contrib.common.maskable.callbacks import MaskableEvalCallback
 from sb3_contrib.common.maskable.utils import is_masking_supported
 from stable_baselines3.common.vec_env import SubprocVecEnv, VecMonitor
 
-from nautilus_ai.data_kitchen import FreqaiDataKitchen
-from nautilus_ai.prediction_models.ReinforcementLearner import ReinforcementLearner
+from nautilus_ai.data import NautilusAIDataKitchen
+from nautilus_ai.rl.ReinforcementLearner import ReinforcementLearner
 from nautilus_ai.rl.BaseReinforcementLearningModel import make_env
 from nautilus_ai.tensorboard.TensorboardCallback import TensorboardCallback
 
 
-logger = logging.getLogger(__name__)
+logger = Logger(__name__)
 
 
 class ReinforcementLearner_multiproc(ReinforcementLearner):
@@ -25,7 +25,7 @@ class ReinforcementLearner_multiproc(ReinforcementLearner):
         data_dictionary: dict[str, Any],
         prices_train: DataFrame,
         prices_test: DataFrame,
-        dk: FreqaiDataKitchen,
+        dk: NautilusAIDataKitchen,
     ):
         """
         User can override this if they are using a custom MyRLEnv
@@ -34,7 +34,7 @@ class ReinforcementLearner_multiproc(ReinforcementLearner):
         :param prices_train/test: DataFrame = dataframe comprised of the prices to be used in
             the environment during training
         or testing
-        :param dk: FreqaiDataKitchen = the datakitchen for the current pair
+        :param dk: NautilusAIDataKitchen = the datakitchen for the current pair
         """
         train_df = data_dictionary["train_features"]
         test_df = data_dictionary["test_features"]

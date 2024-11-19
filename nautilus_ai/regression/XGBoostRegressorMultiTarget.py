@@ -3,12 +3,12 @@ from typing import Any
 
 from xgboost import XGBRegressor
 
-from nautilus_ai.base_models.BaseRegressionModel import BaseRegressionModel
-from nautilus_ai.base_models.MultiOutputRegressor import FreqaiMultiOutputRegressor
-from nautilus_ai.data_kitchen import FreqaiDataKitchen
+from nautilus_ai.BaseRegressionModel import BaseRegressionModel
+from nautilus_ai.MultiOutputRegressor import FreqaiMultiOutputRegressor
+from nautilus_ai.data import NautilusAIDataKitchen
 
 
-logger = logging.getLogger(__name__)
+logger = Logger(__name__)
 
 
 class XGBoostRegressorMultiTarget(BaseRegressionModel):
@@ -21,7 +21,7 @@ class XGBoostRegressorMultiTarget(BaseRegressionModel):
     top level config.json file.
     """
 
-    def fit(self, data_dictionary: dict, dk: FreqaiDataKitchen, **kwargs) -> Any:
+    def fit(self, data_dictionary: dict, dk: NautilusAIDataKitchen, **kwargs) -> Any:
         """
         User sets up the training and test data to fit their desired model here
         :param data_dictionary: the dictionary holding all data for train, test,

@@ -6,18 +6,20 @@ from gymnasium import spaces
 from nautilus_ai.rl.BaseEnvironment import BaseEnvironment, Positions
 
 
-logger = logging.getLogger(__name__)
+logger = Logger(__name__)
 
 
 class Actions(Enum):
     Neutral = 0
-    Buy = 1
-    Sell = 2
+    Long_enter = 1
+    Long_exit = 2
+    Short_enter = 3
+    Short_exit = 4
 
 
-class Base3ActionRLEnv(BaseEnvironment):
+class Base5ActionRLEnv(BaseEnvironment):
     """
-    Base class for a 3 action environment
+    Base class for a 5 action environment
     """
 
     def __init__(self, **kwargs):
@@ -52,22 +54,27 @@ class Base3ActionRLEnv(BaseEnvironment):
 
         trade_type = None
         if self.is_tradesignal(action):
-            if action == Actions.Buy.value:
-                if self._position == Positions.Short:
-                    self._update_total_profit()
+            if action == Actions.Neutral.value:
+                self._position = Positions.Neutral
+                trade_type = "neutral"
+                self._last_trade_tick = None
+            elif action == Actions.Long_enter.value:
                 self._position = Positions.Long
-                trade_type = "long"
+                trade_type = "enter_long"
                 self._last_trade_tick = self._current_tick
-            elif action == Actions.Sell.value and self.can_short:
-                if self._position == Positions.Long:
-                    self._update_total_profit()
+            elif action == Actions.Short_enter.value:
                 self._position = Positions.Short
-                trade_type = "short"
+                trade_type = "enter_short"
                 self._last_trade_tick = self._current_tick
-            elif action == Actions.Sell.value and not self.can_short:
+            elif action == Actions.Long_exit.value:
                 self._update_total_profit()
                 self._position = Positions.Neutral
-                trade_type = "exit"
+                trade_type = "exit_long"
+                self._last_trade_tick = None
+            elif action == Actions.Short_exit.value:
+                self._update_total_profit()
+                self._position = Positions.Neutral
+                trade_type = "exit_short"
                 self._last_trade_tick = None
             else:
                 print("case not defined")
@@ -101,7 +108,6 @@ class Base3ActionRLEnv(BaseEnvironment):
         )
 
         observation = self._get_observation()
-
         # user can play with time if they want
         truncated = False
 
@@ -112,29 +118,36 @@ class Base3ActionRLEnv(BaseEnvironment):
     def is_tradesignal(self, action: int) -> bool:
         """
         Determine if the signal is a trade signal
-        e.g.: agent wants a Actions.Buy while it is in a Positions.short
+        e.g.: agent wants a Actions.Long_exit while it is in a Positions.short
         """
-        return (
-            (action == Actions.Buy.value and self._position == Positions.Neutral)
-            or (action == Actions.Sell.value and self._position == Positions.Long)
-            or (
-                action == Actions.Sell.value
-                and self._position == Positions.Neutral
-                and self.can_short
-            )
-            or (
-                action == Actions.Buy.value and self._position == Positions.Short and self.can_short
-            )
+        return not (
+            (action == Actions.Neutral.value and self._position == Positions.Neutral)
+            or (action == Actions.Neutral.value and self._position == Positions.Short)
+            or (action == Actions.Neutral.value and self._position == Positions.Long)
+            or (action == Actions.Short_enter.value and self._position == Positions.Short)
+            or (action == Actions.Short_enter.value and self._position == Positions.Long)
+            or (action == Actions.Short_exit.value and self._position == Positions.Long)
+            or (action == Actions.Short_exit.value and self._position == Positions.Neutral)
+            or (action == Actions.Long_enter.value and self._position == Positions.Long)
+            or (action == Actions.Long_enter.value and self._position == Positions.Short)
+            or (action == Actions.Long_exit.value and self._position == Positions.Short)
+            or (action == Actions.Long_exit.value and self._position == Positions.Neutral)
         )
 
     def _is_valid(self, action: int) -> bool:
+        # trade signal
         """
         Determine if the signal is valid.
-        e.g.: agent wants a Actions.Sell while it is in a Positions.Long
+        e.g.: agent wants a Actions.Long_exit while it is in a Positions.short
         """
-        if self.can_short:
-            return action in [Actions.Buy.value, Actions.Sell.value, Actions.Neutral.value]
-        else:
-            if action == Actions.Sell.value and self._position != Positions.Long:
+        # Agent should only try to exit if it is in position
+        if action in (Actions.Short_exit.value, Actions.Long_exit.value):
+            if self._position not in (Positions.Short, Positions.Long):
                 return False
-            return True
+
+        # Agent should only try to enter if it is not in position
+        if action in (Actions.Short_enter.value, Actions.Long_enter.value):
+            if self._position != Positions.Neutral:
+                return False
+
+        return True

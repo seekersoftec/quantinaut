@@ -4,7 +4,7 @@ import torch
 from torch import nn
 
 
-logger = logging.getLogger(__name__)
+logger = Logger(__name__)
 
 
 class PyTorchMLPModel(nn.Module):

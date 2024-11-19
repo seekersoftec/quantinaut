@@ -3,20 +3,18 @@ from typing import Any
 
 import numpy as np
 import numpy.typing as npt
-import pandas as pd
 from pandas import DataFrame
-from pandas.api.types import is_integer_dtype
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import LabelEncoder
-from xgboost import XGBClassifier
 
-from nautilus_ai.base_models.BaseClassifierModel import BaseClassifierModel
-from nautilus_ai.data_kitchen import FreqaiDataKitchen
-
-
-logger = logging.getLogger(__name__)
+from nautilus_ai.BaseClassifierModel import BaseClassifierModel
+from nautilus_ai.data import NautilusAIDataKitchen
 
 
-class XGBoostClassifier(BaseClassifierModel):
+logger = Logger(__name__)
+
+
+class SKLearnRandomForestClassifier(BaseClassifierModel):
     """
     User created prediction model. The class inherits IFreqaiModel, which
     means it has full access to all Frequency AI functionality. Typically,
@@ -26,7 +24,7 @@ class XGBoostClassifier(BaseClassifierModel):
     top level config.json file.
     """
 
-    def fit(self, data_dictionary: dict, dk: FreqaiDataKitchen, **kwargs) -> Any:
+    def fit(self, data_dictionary: dict, dk: NautilusAIDataKitchen, **kwargs) -> Any:
         """
         User sets up the training and test data to fit their desired model here
         :param data_dictionary: the dictionary holding all data for train, test,
@@ -37,37 +35,36 @@ class XGBoostClassifier(BaseClassifierModel):
         X = data_dictionary["train_features"].to_numpy()
         y = data_dictionary["train_labels"].to_numpy()[:, 0]
 
-        le = LabelEncoder()
-        if not is_integer_dtype(y):
-            y = pd.Series(le.fit_transform(y), dtype="int64")
-
         if self.freqai_info.get("data_split_parameters", {}).get("test_size", 0.1) == 0:
             eval_set = None
         else:
             test_features = data_dictionary["test_features"].to_numpy()
             test_labels = data_dictionary["test_labels"].to_numpy()[:, 0]
 
-            if not is_integer_dtype(test_labels):
-                test_labels = pd.Series(le.transform(test_labels), dtype="int64")
+            eval_set = (test_features, test_labels)
 
-            eval_set = [(test_features, test_labels)]
+        if self.freqai_info.get("continual_learning", False):
+            logger.warning(
+                "Continual learning is not supported for "
+                "SKLearnRandomForestClassifier, ignoring."
+            )
 
         train_weights = data_dictionary["train_weights"]
 
-        init_model = self.get_init_model(dk.pair)
+        model = RandomForestClassifier(**self.model_training_parameters)
 
-        model = XGBClassifier(**self.model_training_parameters)
-
-        model.fit(X=X, y=y, eval_set=eval_set, sample_weight=train_weights, xgb_model=init_model)
+        model.fit(X=X, y=y, sample_weight=train_weights)
+        if eval_set:
+            logger.info("Score: %s", model.score(eval_set[0], eval_set[1]))
 
         return model
 
     def predict(
-        self, unfiltered_df: DataFrame, dk: FreqaiDataKitchen, **kwargs
+        self, unfiltered_df: DataFrame, dk: NautilusAIDataKitchen, **kwargs
     ) -> tuple[DataFrame, npt.NDArray[np.int_]]:
         """
         Filter the prediction features data and predict with it.
-        :param unfiltered_df: Full dataframe for the current backtest period.
+        :param  unfiltered_df: Full dataframe for the current backtest period.
         :return:
         :pred_df: dataframe containing the predictions
         :do_predict: np.array of 1s and 0s to indicate places where freqai needed to remove

@@ -1,16 +1,16 @@
 import logging
 from typing import Any
 
-from lightgbm import LGBMClassifier
+from lightgbm import LGBMRegressor
 
-from nautilus_ai.base_models.BaseClassifierModel import BaseClassifierModel
-from nautilus_ai.data_kitchen import FreqaiDataKitchen
-
-
-logger = logging.getLogger(__name__)
+from nautilus_ai.regression.BaseRegressionModel import BaseRegressionModel
+from nautilus_ai.data import NautilusAIDataKitchen
 
 
-class LightGBMClassifier(BaseClassifierModel):
+logger = Logger(__name__)
+
+
+class LightGBMRegressor(BaseRegressionModel):
     """
     User created prediction model. The class inherits IFreqaiModel, which
     means it has full access to all Frequency AI functionality. Typically,
@@ -20,7 +20,7 @@ class LightGBMClassifier(BaseClassifierModel):
     top level config.json file.
     """
 
-    def fit(self, data_dictionary: dict, dk: FreqaiDataKitchen, **kwargs) -> Any:
+    def fit(self, data_dictionary: dict, dk: NautilusAIDataKitchen, **kwargs) -> Any:
         """
         User sets up the training and test data to fit their desired model here
         :param data_dictionary: the dictionary holding all data for train, test,
@@ -30,28 +30,24 @@ class LightGBMClassifier(BaseClassifierModel):
 
         if self.freqai_info.get("data_split_parameters", {}).get("test_size", 0.1) == 0:
             eval_set = None
-            test_weights = None
+            eval_weights = None
         else:
-            eval_set = [
-                (
-                    data_dictionary["test_features"].to_numpy(),
-                    data_dictionary["test_labels"].to_numpy()[:, 0],
-                )
-            ]
-            test_weights = data_dictionary["test_weights"]
-        X = data_dictionary["train_features"].to_numpy()
-        y = data_dictionary["train_labels"].to_numpy()[:, 0]
+            eval_set = [(data_dictionary["test_features"], data_dictionary["test_labels"])]
+            eval_weights = data_dictionary["test_weights"]
+        X = data_dictionary["train_features"]
+        y = data_dictionary["train_labels"]
         train_weights = data_dictionary["train_weights"]
 
         init_model = self.get_init_model(dk.pair)
 
-        model = LGBMClassifier(**self.model_training_parameters)
+        model = LGBMRegressor(**self.model_training_parameters)
+
         model.fit(
             X=X,
             y=y,
             eval_set=eval_set,
             sample_weight=train_weights,
-            eval_sample_weight=[test_weights],
+            eval_sample_weight=[eval_weights],
             init_model=init_model,
         )
 

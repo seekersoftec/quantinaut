@@ -5,7 +5,7 @@ from typing import Any
 from xgboost.callback import TrainingCallback
 
 
-logger = logging.getLogger(__name__)
+logger = Logger(__name__)
 
 
 class BaseTensorboardLogger:

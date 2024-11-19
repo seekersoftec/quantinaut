@@ -21,7 +21,7 @@ from stable_baselines3.common.utils import set_random_seed
 from stable_baselines3.common.vec_env import SubprocVecEnv, VecMonitor
 
 from nautilus_ai.exceptions import OperationalException
-from nautilus_ai.data_kitchen import FreqaiDataKitchen
+from nautilus_ai.data import NautilusAIDataKitchen
 from nautilus_ai.freqai_interface import IFreqaiModel
 from nautilus_ai.rl.Base5ActionRLEnv import Actions, Base5ActionRLEnv
 from nautilus_ai.rl.BaseEnvironment import BaseActions, BaseEnvironment, Positions
@@ -29,7 +29,7 @@ from nautilus_ai.tensorboard.TensorboardCallback import TensorboardCallback
 from nautilus_ai.persistence import Trade
 
 
-logger = logging.getLogger(__name__)
+logger = Logger(__name__)
 
 torch.multiprocessing.set_sharing_strategy("file_system")
 
@@ -96,7 +96,7 @@ class BaseReinforcementLearningModel(IFreqaiModel):
             self.freqai_info["data_split_parameters"].update({"shuffle": False})
             logger.warning("User tried to shuffle training data. Setting shuffle to False")
 
-    def train(self, unfiltered_df: DataFrame, pair: str, dk: FreqaiDataKitchen, **kwargs) -> Any:
+    def train(self, unfiltered_df: DataFrame, pair: str, dk: NautilusAIDataKitchen, **kwargs) -> Any:
         """
         Filter the training data and train a model to it. Train makes heavy use of the datakitchen
         for storing, saving, loading, and analyzing the data.
@@ -155,7 +155,7 @@ class BaseReinforcementLearningModel(IFreqaiModel):
         data_dictionary: dict[str, DataFrame],
         prices_train: DataFrame,
         prices_test: DataFrame,
-        dk: FreqaiDataKitchen,
+        dk: NautilusAIDataKitchen,
     ):
         """
         User can override this if they are using a custom MyRLEnv
@@ -163,7 +163,7 @@ class BaseReinforcementLearningModel(IFreqaiModel):
             features/labels/weights.
         :param prices_train/test: DataFrame = dataframe comprised of the prices to be used in the
             environment during training or testing
-        :param dk: FreqaiDataKitchen = the datakitchen for the current pair
+        :param dk: NautilusAIDataKitchen = the datakitchen for the current pair
         """
         train_df = data_dictionary["train_features"]
         test_df = data_dictionary["test_features"]
@@ -205,7 +205,7 @@ class BaseReinforcementLearningModel(IFreqaiModel):
         return env_info
 
     @abstractmethod
-    def fit(self, data_dictionary: dict[str, Any], dk: FreqaiDataKitchen, **kwargs):
+    def fit(self, data_dictionary: dict[str, Any], dk: NautilusAIDataKitchen, **kwargs):
         """
         Agent customizations and abstract Reinforcement Learning customizations
         go in here. Abstract method, so this function must be overridden by
@@ -250,7 +250,7 @@ class BaseReinforcementLearningModel(IFreqaiModel):
         return market_side, current_profit, int(trade_duration)
 
     def predict(
-        self, unfiltered_df: DataFrame, dk: FreqaiDataKitchen, **kwargs
+        self, unfiltered_df: DataFrame, dk: NautilusAIDataKitchen, **kwargs
     ) -> tuple[DataFrame, npt.NDArray[np.int_]]:
         """
         Filter the prediction features data and predict with it.
@@ -278,12 +278,12 @@ class BaseReinforcementLearningModel(IFreqaiModel):
         return (pred_df, dk.do_predict)
 
     def rl_model_predict(
-        self, dataframe: DataFrame, dk: FreqaiDataKitchen, model: Any
+        self, dataframe: DataFrame, dk: NautilusAIDataKitchen, model: Any
     ) -> DataFrame:
         """
         A helper function to make predictions in the Reinforcement learning module.
         :param dataframe: DataFrame = the dataframe of features to make the predictions on
-        :param dk: FreqaiDatakitchen = data kitchen for the current pair
+        :param dk: NautilusAIDataKitchen = data kitchen for the current pair
         :param model: Any = the trained model used to inference the features.
         """
         output = pd.DataFrame(np.zeros(len(dataframe)), columns=dk.label_list)
@@ -303,7 +303,7 @@ class BaseReinforcementLearningModel(IFreqaiModel):
         return output
 
     def build_ohlc_price_dataframes(
-        self, data_dictionary: dict, pair: str, dk: FreqaiDataKitchen
+        self, data_dictionary: dict, pair: str, dk: NautilusAIDataKitchen
     ) -> tuple[DataFrame, DataFrame]:
         """
         Builds the train prices and test prices for the environment.
@@ -362,7 +362,7 @@ class BaseReinforcementLearningModel(IFreqaiModel):
 
         return prices_train, prices_test
 
-    def drop_ohlc_from_df(self, df: DataFrame, dk: FreqaiDataKitchen):
+    def drop_ohlc_from_df(self, df: DataFrame, dk: NautilusAIDataKitchen):
         """
         Given a dataframe, drop the ohlc data
         """
@@ -375,7 +375,7 @@ class BaseReinforcementLearningModel(IFreqaiModel):
 
         return df
 
-    def load_model_from_disk(self, dk: FreqaiDataKitchen) -> Any:
+    def load_model_from_disk(self, dk: NautilusAIDataKitchen) -> Any:
         """
         Can be used by user if they are trying to limit_ram_usage *and*
         perform continual learning.

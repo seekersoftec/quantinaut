@@ -14,7 +14,7 @@ from nautilus_ai.torch.PyTorchTrainerInterface import PyTorchTrainerInterface
 from .datasets import WindowDataset
 
 
-logger = logging.getLogger(__name__)
+logger = Logger(__name__)
 
 
 class PyTorchModelTrainer(PyTorchTrainerInterface):

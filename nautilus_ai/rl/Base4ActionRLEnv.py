@@ -6,7 +6,7 @@ from gymnasium import spaces
 from nautilus_ai.rl.BaseEnvironment import BaseEnvironment, Positions
 
 
-logger = logging.getLogger(__name__)
+logger = Logger(__name__)
 
 
 class Actions(Enum):

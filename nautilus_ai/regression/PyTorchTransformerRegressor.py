@@ -5,8 +5,8 @@ import numpy.typing as npt
 import pandas as pd
 import torch
 
-from nautilus_ai.base_models.BasePyTorchRegressor import BasePyTorchRegressor
-from nautilus_ai.data_kitchen import FreqaiDataKitchen
+from nautilus_ai.BasePyTorchRegressor import BasePyTorchRegressor
+from nautilus_ai.data import NautilusAIDataKitchen
 from nautilus_ai.torch.PyTorchDataConvertor import (
     DefaultPyTorchDataConvertor,
     PyTorchDataConvertor,
@@ -63,7 +63,7 @@ class PyTorchTransformerRegressor(BasePyTorchRegressor):
         self.model_kwargs: dict[str, Any] = config.get("model_kwargs", {})
         self.trainer_kwargs: dict[str, Any] = config.get("trainer_kwargs", {})
 
-    def fit(self, data_dictionary: dict, dk: FreqaiDataKitchen, **kwargs) -> Any:
+    def fit(self, data_dictionary: dict, dk: NautilusAIDataKitchen, **kwargs) -> Any:
         """
         User sets up the training and test data to fit their desired model here
         :param data_dictionary: the dictionary holding all data for train, test,
@@ -99,7 +99,7 @@ class PyTorchTransformerRegressor(BasePyTorchRegressor):
         return trainer
 
     def predict(
-        self, unfiltered_df: pd.DataFrame, dk: FreqaiDataKitchen, **kwargs
+        self, unfiltered_df: pd.DataFrame, dk: NautilusAIDataKitchen, **kwargs
     ) -> tuple[pd.DataFrame, npt.NDArray[np.int_]]:
         """
         Filter the prediction features data and predict with it.

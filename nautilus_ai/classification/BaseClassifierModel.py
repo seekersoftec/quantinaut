@@ -7,11 +7,11 @@ import numpy.typing as npt
 import pandas as pd
 from pandas import DataFrame
 
-from nautilus_ai.data_kitchen import FreqaiDataKitchen
+from nautilus_ai.data import NautilusAIDataKitchen
 from nautilus_ai.freqai_interface import IFreqaiModel
 
 
-logger = logging.getLogger(__name__)
+logger = Logger(__name__)
 
 
 class BaseClassifierModel(IFreqaiModel):
@@ -21,7 +21,7 @@ class BaseClassifierModel(IFreqaiModel):
     such as prediction_models/CatboostClassifier.py for guidance.
     """
 
-    def train(self, unfiltered_df: DataFrame, pair: str, dk: FreqaiDataKitchen, **kwargs) -> Any:
+    def train(self, unfiltered_df: DataFrame, pair: str, dk: NautilusAIDataKitchen, **kwargs) -> Any:
         """
         Filter the training data and train a model to it. Train makes heavy use of the datakitchen
         for storing, saving, loading, and analyzing the data.
@@ -85,7 +85,7 @@ class BaseClassifierModel(IFreqaiModel):
         return model
 
     def predict(
-        self, unfiltered_df: DataFrame, dk: FreqaiDataKitchen, **kwargs
+        self, unfiltered_df: DataFrame, dk: NautilusAIDataKitchen, **kwargs
     ) -> tuple[DataFrame, npt.NDArray[np.int_]]:
         """
         Filter the prediction features data and predict with it.

@@ -2,8 +2,8 @@ from typing import Any
 
 import torch
 
-from nautilus_ai.base_models.BasePyTorchClassifier import BasePyTorchClassifier
-from nautilus_ai.data_kitchen import FreqaiDataKitchen
+from nautilus_ai.BasePyTorchClassifier import BasePyTorchClassifier
+from nautilus_ai.data import NautilusAIDataKitchen
 from nautilus_ai.torch.PyTorchDataConvertor import (
     DefaultPyTorchDataConvertor,
     PyTorchDataConvertor,
@@ -55,7 +55,7 @@ class PyTorchMLPClassifier(BasePyTorchClassifier):
         self.model_kwargs: dict[str, Any] = config.get("model_kwargs", {})
         self.trainer_kwargs: dict[str, Any] = config.get("trainer_kwargs", {})
 
-    def fit(self, data_dictionary: dict, dk: FreqaiDataKitchen, **kwargs) -> Any:
+    def fit(self, data_dictionary: dict, dk: NautilusAIDataKitchen, **kwargs) -> Any:
         """
         User sets up the training and test data to fit their desired model here
         :param data_dictionary: the dictionary holding all data for train, test,

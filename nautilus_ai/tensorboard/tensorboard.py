@@ -11,7 +11,7 @@ from nautilus_ai.tensorboard.base_tensorboard import (
 )
 
 
-logger = logging.getLogger(__name__)
+logger = Logger(__name__)
 
 
 class TensorboardLogger(BaseTensorboardLogger):

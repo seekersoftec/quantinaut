@@ -5,13 +5,14 @@ from typing import Any
 import torch as th
 from stable_baselines3.common.callbacks import ProgressBarCallback
 
-from nautilus_ai.data_kitchen import FreqaiDataKitchen
+from nautilus_ai.common import Logger
+from nautilus_ai.data import NautilusAIDataKitchen
 from nautilus_ai.rl.Base5ActionRLEnv import Actions, Base5ActionRLEnv, Positions
 from nautilus_ai.rl.BaseEnvironment import BaseEnvironment
 from nautilus_ai.rl.BaseReinforcementLearningModel import BaseReinforcementLearningModel
 
 
-logger = logging.getLogger(__name__)
+logger = Logger(__name__)
 
 
 class ReinforcementLearner(BaseReinforcementLearningModel):
@@ -22,7 +23,7 @@ class ReinforcementLearner(BaseReinforcementLearningModel):
     environment/training controls. Define the file as follows:
 
     ```
-    from nautilus_ai.prediction_models.ReinforcementLearner import ReinforcementLearner
+    from nautilus_ai.rl.ReinforcementLearner import ReinforcementLearner
 
     class MyCoolRLModel(ReinforcementLearner):
     ```
@@ -44,12 +45,12 @@ class ReinforcementLearner(BaseReinforcementLearningModel):
     take fine-tuned control over the data handling pipeline.
     """
 
-    def fit(self, data_dictionary: dict[str, Any], dk: FreqaiDataKitchen, **kwargs):
+    def fit(self, data_dictionary: dict[str, Any], dk: NautilusAIDataKitchen, **kwargs):
         """
         User customizable fit method
         :param data_dictionary: dict = common data dictionary containing all train/test
             features/labels/weights.
-        :param dk: FreqaiDatakitchen = data kitchen for current pair.
+        :param dk: NautilusAIDataKitchen = data kitchen for current pair.
         :return:
         model Any = trained model to be used for inference in dry/live/backtesting
         """

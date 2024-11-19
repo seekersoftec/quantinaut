@@ -22,7 +22,7 @@ from nautilus_ai.strategy.interface import IStrategy
 from nautilus_ai.util import dt_now
 
 
-logger = logging.getLogger(__name__)
+logger = Logger(__name__)
 
 
 class PairInfo(NamedTuple):

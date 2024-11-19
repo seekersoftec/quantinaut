@@ -1,17 +1,17 @@
 import logging
 from typing import Any
 
-from lightgbm import LGBMClassifier
+from lightgbm import LGBMRegressor
 
-from nautilus_ai.base_models.BaseClassifierModel import BaseClassifierModel
-from nautilus_ai.base_models.MultiOutputClassifier import FreqaiMultiOutputClassifier
-from nautilus_ai.data_kitchen import FreqaiDataKitchen
-
-
-logger = logging.getLogger(__name__)
+from nautilus_ai.BaseRegressionModel import BaseRegressionModel
+from nautilus_ai.MultiOutputRegressor import FreqaiMultiOutputRegressor
+from nautilus_ai.data import NautilusAIDataKitchen
 
 
-class LightGBMClassifierMultiTarget(BaseClassifierModel):
+logger = Logger(__name__)
+
+
+class LightGBMRegressorMultiTarget(BaseRegressionModel):
     """
     User created prediction model. The class inherits IFreqaiModel, which
     means it has full access to all Frequency AI functionality. Typically,
@@ -21,7 +21,7 @@ class LightGBMClassifierMultiTarget(BaseClassifierModel):
     top level config.json file.
     """
 
-    def fit(self, data_dictionary: dict, dk: FreqaiDataKitchen, **kwargs) -> Any:
+    def fit(self, data_dictionary: dict, dk: NautilusAIDataKitchen, **kwargs) -> Any:
         """
         User sets up the training and test data to fit their desired model here
         :param data_dictionary: the dictionary holding all data for train, test,
@@ -29,7 +29,7 @@ class LightGBMClassifierMultiTarget(BaseClassifierModel):
         :param dk: The datakitchen object for the current coin/model
         """
 
-        lgb = LGBMClassifier(**self.model_training_parameters)
+        lgb = LGBMRegressor(**self.model_training_parameters)
 
         X = data_dictionary["train_features"]
         y = data_dictionary["train_labels"]
@@ -42,10 +42,12 @@ class LightGBMClassifierMultiTarget(BaseClassifierModel):
             eval_weights = [data_dictionary["test_weights"]]
             eval_sets = [(None, None)] * data_dictionary["test_labels"].shape[1]  # type: ignore
             for i in range(data_dictionary["test_labels"].shape[1]):
-                eval_sets[i] = (  # type: ignore
-                    data_dictionary["test_features"],
-                    data_dictionary["test_labels"].iloc[:, i],
-                )
+                eval_sets[i] = [  # type: ignore
+                    (
+                        data_dictionary["test_features"],
+                        data_dictionary["test_labels"].iloc[:, i],
+                    )
+                ]
 
         init_model = self.get_init_model(dk.pair)
         if init_model:
@@ -63,7 +65,7 @@ class LightGBMClassifierMultiTarget(BaseClassifierModel):
                 }
             )
 
-        model = FreqaiMultiOutputClassifier(estimator=lgb)
+        model = FreqaiMultiOutputRegressor(estimator=lgb)
         thread_training = self.freqai_info.get("multitarget_parallel_training", False)
         if thread_training:
             model.n_jobs = y.shape[1]

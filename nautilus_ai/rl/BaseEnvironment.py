@@ -1,4 +1,3 @@
-import logging
 import random
 from abc import abstractmethod
 from enum import Enum
@@ -10,10 +9,11 @@ from gymnasium import spaces
 from gymnasium.utils import seeding
 from pandas import DataFrame
 
+from nautilus_ai.common import Logger
 from nautilus_ai.exceptions import OperationalException
 
 
-logger = logging.getLogger(__name__)
+logger = Logger(__name__)
 
 
 class BaseActions(Enum):

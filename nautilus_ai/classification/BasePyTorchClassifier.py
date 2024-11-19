@@ -10,11 +10,11 @@ from pandas import DataFrame
 from torch.nn import functional as F
 
 from nautilus_ai.exceptions import OperationalException
-from nautilus_ai.base_models.BasePyTorchModel import BasePyTorchModel
-from nautilus_ai.data_kitchen import FreqaiDataKitchen
+from nautilus_ai.BasePyTorchModel import BasePyTorchModel
+from nautilus_ai.data import NautilusAIDataKitchen
 
 
-logger = logging.getLogger(__name__)
+logger = Logger(__name__)
 
 
 class BasePyTorchClassifier(BasePyTorchModel):
@@ -43,7 +43,7 @@ class BasePyTorchClassifier(BasePyTorchModel):
         self.index_to_class_name = {}
 
     def predict(
-        self, unfiltered_df: DataFrame, dk: FreqaiDataKitchen, **kwargs
+        self, unfiltered_df: DataFrame, dk: NautilusAIDataKitchen, **kwargs
     ) -> tuple[DataFrame, npt.NDArray[np.int_]]:
         """
         Filter the prediction features data and predict with it.
@@ -101,7 +101,7 @@ class BasePyTorchClassifier(BasePyTorchModel):
     def encode_class_names(
         self,
         data_dictionary: dict[str, pd.DataFrame],
-        dk: FreqaiDataKitchen,
+        dk: NautilusAIDataKitchen,
         class_names: list[str],
     ):
         """
@@ -142,7 +142,7 @@ class BasePyTorchClassifier(BasePyTorchModel):
     def convert_label_column_to_int(
         self,
         data_dictionary: dict[str, pd.DataFrame],
-        dk: FreqaiDataKitchen,
+        dk: NautilusAIDataKitchen,
         class_names: list[str],
     ):
         self.init_class_names_to_index_mapping(class_names)
@@ -158,7 +158,7 @@ class BasePyTorchClassifier(BasePyTorchModel):
 
         return self.class_names
 
-    def train(self, unfiltered_df: DataFrame, pair: str, dk: FreqaiDataKitchen, **kwargs) -> Any:
+    def train(self, unfiltered_df: DataFrame, pair: str, dk: NautilusAIDataKitchen, **kwargs) -> Any:
         """
         Filter the training data and train a model to it. Train makes heavy use of the datakitchen
         for storing, saving, loading, and analyzing the data.
