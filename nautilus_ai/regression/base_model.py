@@ -1,4 +1,3 @@
-import logging
 from time import time
 from typing import Any
 
@@ -6,6 +5,7 @@ import numpy as np
 import numpy.typing as npt
 from pandas import DataFrame
 
+from nautilus_ai.common import Logger
 from nautilus_ai.data.kitchen import NautilusAIDataKitchen
 from nautilus_ai.interface import INautilusAIModel
 

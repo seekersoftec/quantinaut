@@ -1,8 +1,8 @@
-import logging
 from typing import Any
 
 from xgboost import XGBRFRegressor
 
+from nautilus_ai.common import Logger
 from nautilus_ai.regression.base_model import BaseRegressionModel
 from nautilus_ai.data import NautilusAIDataKitchen
 from nautilus_ai.tensorboard import TBCallback

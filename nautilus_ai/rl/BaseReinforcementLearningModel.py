@@ -22,7 +22,7 @@ from stable_baselines3.common.vec_env import SubprocVecEnv, VecMonitor
 
 from nautilus_ai.exceptions import OperationalException
 from nautilus_ai.data import NautilusAIDataKitchen
-from nautilus_ai.freqai_interface import INautilusAIModel
+from nautilus_ai.interface import INautilusAIModel
 from nautilus_ai.rl.Base5ActionRLEnv import Actions, Base5ActionRLEnv
 from nautilus_ai.rl.base_environment import BaseActions, BaseEnvironment, Positions
 from nautilus_ai.tensorboard.tensorboard_callback import TensorboardCallback
