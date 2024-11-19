@@ -37,18 +37,6 @@ from nautilus_ai.data import NautilusAIDataDrawer, NautilusAIDataKitchen
 from nautilus_ai.exceptions import OperationalException
 from nautilus_ai.common.utils import bars_to_dataframe, make_bar_type
 
-
-# from freqtrade.configuration import TimeRange
-# from freqtrade.constants import DOCS_LINK, Config
-# from freqtrade.data.dataprovider import DataProvider
-# from freqtrade.enums import RunMode
-# from freqtrade.exceptions import OperationalException
-# from freqtrade.exchange import timeframe_to_seconds
-# from freqtrade.freqai.data_drawer import FreqaiDataDrawer
-# from freqtrade.freqai.data_kitchen import NautilusAIDataKitchen
-# from freqtrade.freqai.utils import get_tb_logger, plot_feature_importance, record_params
-# from freqtrade.strategy.interface import IStrategy
-
 pd.options.mode.chained_assignment = None
 
 
