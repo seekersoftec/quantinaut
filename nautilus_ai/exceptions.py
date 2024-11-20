@@ -10,3 +10,8 @@ class OperationalException(NautilusAIException):
     Requires manual intervention and will stop the node.
     Most of the time, this is caused by an invalid Configuration.
     """
+
+class ConfigurationError(OperationalException):
+    """
+    Configuration error. Usually caused by invalid configuration.
+    """

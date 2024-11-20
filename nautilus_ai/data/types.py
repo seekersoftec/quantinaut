@@ -37,3 +37,7 @@ class Prediction(Data):
         super().__init__(ts_init=ts_init, ts_event=ts_init)
         self.instrument_id = instrument_id
         self.prediction = prediction
+
+
+class TimeRange:
+    pass
