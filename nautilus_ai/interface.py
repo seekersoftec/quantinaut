@@ -22,6 +22,8 @@ from sklearn.preprocessing import MinMaxScaler
 from nautilus_trader.common.actor import Actor
 from nautilus_trader.model.data import DataType
 from nautilus_trader.model.data import Bar, BarSpecification
+
+# from nautilus_trader.model.data.bar import Bar, BarSpecification
 from nautilus_trader.model.identifiers import InstrumentId
 from nautilus_trader.model.instruments import Instrument
 from nautilus_trader.common.enums import LogColor
@@ -35,7 +37,12 @@ from nautilus_ai.config import (
 )
 from nautilus_ai.data import NautilusAIDataDrawer, NautilusAIDataKitchen
 from nautilus_ai.exceptions import OperationalException
-from nautilus_ai.common.utils import bars_to_dataframe, make_bar_type
+from nautilus_ai.common.utils import (
+    bars_to_dataframe,
+    make_bar_type,
+    record_params,
+    timeframe_to_seconds,
+)
 
 pd.options.mode.chained_assignment = None
 
@@ -50,7 +57,7 @@ class INautilusAIModel(Actor, ABC):
 
     Attributes
     ----------
-    nautilus_ai_info : INautilusAIModelConfig
+    config_info : INautilusAIModelConfig
         Configuration settings for the AI model.
     data_split_parameters : dict[str, Any]
         Parameters for splitting training and validation data.
@@ -104,25 +111,29 @@ class INautilusAIModel(Actor, ABC):
         super().__init__(config=config)
 
         # Configuration and parameter initialization
-        self.nautilus_ai_info: INautilusAIModelConfig = self.config
+        self.config_info: INautilusAIModelConfig = self.config
         self.data_split_parameters: dict[str, Any] = (
-            self.nautilus_ai_info.data_split_parameters
+            self.config_info.data_split_parameters
         )
 
         self.model_training_parameters: ModelTrainingParameters = (
             ModelTrainingParameters()
-            if self.nautilus_ai_info.model_training_parameters is None
-            else self.nautilus_ai_info.model_training_parameters
+            if self.config_info.model_training_parameters is None
+            else self.config_info.model_training_parameters
         )
-        self.identifier: str = self.nautilus_ai_info.identifier
+        self.identifier: str = self.config_info.identifier
         self.retrain = False
         self.first = True
+
+        self.bar_spec = None
+        if self.config_info.bar_spec is not None:
+            self.bar_spec = BarSpecification.from_str(self.config_info.bar_spec)
 
         # Path setup
         self.set_full_path()
 
         # Backtesting configurations
-        self.save_backtest_models: bool = self.nautilus_ai_info.save_backtest_models
+        self.save_backtest_models: bool = self.config_info.save_backtest_models
         if self.save_backtest_models:
             self.log.info("Backtesting module configured to save all models.")
 
@@ -135,17 +146,17 @@ class INautilusAIModel(Actor, ABC):
 
         # Feature and parameter initialization
         self.scanning = False
-        self.ft_params: FeatureParameters = self.nautilus_ai_info.feature_parameters
+        self.ft_params: FeatureParameters = self.config_info.feature_parameters
         self.corr_pairlist: list[str] = self.ft_params.include_corr_pairlist
 
-        self.keras: bool = self.nautilus_ai_info.keras
+        self.keras: bool = self.config_info.keras
         if self.keras and self.ft_params.DI_threshold:
             self.ft_params.DI_threshold = 0
             self.log.warning(
                 "DI threshold is not configured for Keras models yet. Deactivating."
             )
 
-        self.CONV_WIDTH = max(1, self.nautilus_ai_info.conv_width)
+        self.CONV_WIDTH = max(1, self.config_info.conv_width)
         self.class_names: list[str] = []  # For classification subclasses
         self.pair_it = 0
         self.pair_it_train = 0
@@ -157,8 +168,8 @@ class INautilusAIModel(Actor, ABC):
         self.train_time: float = 0
         self.begin_time: float = 0
         self.begin_time_train: float = 0
-        self.base_tf_seconds = timeframe_to_seconds(self.config["timeframe"])
-        self.continual_learning = self.nautilus_ai_info.continual_learning
+        self.base_tf_seconds = timeframe_to_seconds(self.config.timeframe)
+        self.continual_learning = self.config_info.continual_learning
         self.plot_features = max(0, self.ft_params.plot_feature_importances)
         self.corr_dataframes: dict[str, DataFrame] = {}
         self.get_corr_dataframes: bool = True  # Performance optimization
@@ -182,10 +193,10 @@ class INautilusAIModel(Actor, ABC):
             )
 
         # TensorBoard configuration
-        self.activate_tensorboard: bool = self.nautilus_ai_info.activate_tensorboard
+        self.activate_tensorboard: bool = self.config_info.activate_tensorboard
 
         # Save initial configuration
-        record_params(config, self.full_path)
+        record_params(config.dict(), self.full_path)
 
     #
     # Internal Actor Methods
@@ -205,18 +216,33 @@ class INautilusAIModel(Actor, ABC):
         :param strategy: Strategy to train on
 
         """
-        self.instrument = self.cache.instrument(self.instrument_id)
-        if self.instrument is None:
-            self.log.error(f"Could not find instrument for {self.instrument_id}")
-            self.stop()
-            return
+
+        instrument_ids_str = (["ETHUSDT.BINANCE"],)
+        # bar_type_str=BarType.from_str("ETHUSDT.BINANCE-250-TICK-LAST-INTERNAL"),
+
+        if self.config_info.instrument_ids_str is not None:
+            for instrument_id in self.config_info.instrument_ids:
+                self.instrument = self.cache.instrument(instrument_id)
+                if self.instrument is None:
+                    self.log.error(
+                        f"Could not find instrument for {self.instrument_id}"
+                    )
+                    self.stop()
+                    return
+
+                self.subscribe_quote_ticks(instrument_id)
+
+                if self.bar_spec is not None:
+                    self.subscribe_bars(
+                        make_bar_type(
+                            instrument_id=instrument_id, bar_spec=self.bar_spec
+                        )
+                    )
 
         # Register the indicators for updating
-        self.register_indicator_for_bars(self.bar_type, self.indicator_manager)
-
-        # Subscribe to live data
-        self.subscribe_bars(self.bar_type)
-        self.subscribe_quote_ticks(self.instrument_id)
+        # self.register_indicator_for_bars(
+        #         self.config_info.bar_type, self.indicator_manager
+        #     )
 
     def on_stop(self) -> None:
         """
@@ -246,7 +272,7 @@ class INautilusAIModel(Actor, ABC):
         self.data_drawer.save_historic_predictions_to_disk()
 
         # Handle thread termination based on configuration
-        if self.nautilus_ai_info.wait_for_training_iteration_on_reload:
+        if self.config_info.wait_for_training_iteration_on_reload:
             self.log.info("Waiting for the current training iteration to complete...")
             for thread in self._threads:
                 thread.join()
@@ -260,6 +286,15 @@ class INautilusAIModel(Actor, ABC):
     #
     # Methods used by internal Actor Methods
     #
+
+    def set_full_path(self) -> None:
+        """
+        Creates and sets the full path for the identifier
+        """
+        self.full_path = Path(
+            self.config_info.user_data_dir / "models" / f"{self.identifier}"
+        )
+        self.full_path.mkdir(parents=True, exist_ok=True)
 
     def clean_up(self) -> None:
         """

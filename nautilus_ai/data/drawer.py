@@ -21,7 +21,7 @@ from pandas import DataFrame
 from nautilus_trader.core.data import Data
 from nautilus_trader.model.instruments import Instrument
 from nautilus_ai.common.logging import Logger
-from nautilus_ai.data import NautilusAIDataKitchen
+from nautilus_ai.data.kitchen import NautilusAIDataKitchen
 from nautilus_ai.config import INautilusAIModelConfig
 from nautilus_ai.exceptions import OperationalException
 
@@ -728,152 +728,152 @@ class NautilusAIDataDrawer(Data):
     # TODO: Fix the methods below
     #
 
-    def update_historic_data(
-        self, strategy: IStrategy, data_kitchen: NautilusAIDataKitchen
-    ) -> None:
-        """
-        Append new candles to our stores historic data (in memory) so that
-        we do not need to load candle history from disk and we dont need to
-        pinging exchange multiple times for the same candle.
-        :param dataframe: DataFrame = strategy provided dataframe
-        """
-        feat_params = self.nautilus_ai_info.feature_parameters
-        with self.history_lock:
-            history_data = self.historic_data
+    # def update_historic_data(
+    #     self, strategy: IStrategy, data_kitchen: NautilusAIDataKitchen
+    # ) -> None:
+    #     """
+    #     Append new candles to our stores historic data (in memory) so that
+    #     we do not need to load candle history from disk and we dont need to
+    #     pinging exchange multiple times for the same candle.
+    #     :param dataframe: DataFrame = strategy provided dataframe
+    #     """
+    #     feat_params = self.nautilus_ai_info.feature_parameters
+    #     with self.history_lock:
+    #         history_data = self.historic_data
 
-            for instrument in data_kitchen.all_instruments:
-                for tf in feat_params.include_timeframes:
-                    hist_df = history_data[instrument][tf]
-                    # check if newest candle is already appended
-                    df_dp = strategy.dp.get_instrument_dataframe(instrument, tf)
-                    if len(df_dp.index) == 0:
-                        continue
-                    if str(hist_df.iloc[-1]["date"]) == str(
-                        df_dp.iloc[-1:]["date"].iloc[-1]
-                    ):
-                        continue
+    #         for instrument in data_kitchen.all_instruments:
+    #             for tf in feat_params.include_timeframes:
+    #                 hist_df = history_data[instrument][tf]
+    #                 # check if newest candle is already appended
+    #                 df_dp = strategy.dp.get_instrument_dataframe(instrument, tf)
+    #                 if len(df_dp.index) == 0:
+    #                     continue
+    #                 if str(hist_df.iloc[-1]["date"]) == str(
+    #                     df_dp.iloc[-1:]["date"].iloc[-1]
+    #                 ):
+    #                     continue
 
-                    try:
-                        index = (
-                            df_dp.loc[df_dp["date"] == hist_df.iloc[-1]["date"]].index[
-                                0
-                            ]
-                            + 1
-                        )
-                    except IndexError:
-                        if hist_df.iloc[-1]["date"] < df_dp["date"].iloc[0]:
-                            raise OperationalException(
-                                "In memory historical data is older than "
-                                f"oldest DataProvider candle for {instrument} on "
-                                f"timeframe {tf}"
-                            )
-                        else:
-                            index = -1
-                            logger.warning(
-                                f"No common dates in historical data and dataprovider for {instrument}. "
-                                f"Appending latest dataprovider candle to historical data "
-                                "but please be aware that there is likely a gap in the historical "
-                                "data. \n"
-                                f"Historical data ends at {hist_df.iloc[-1]['date']} "
-                                f"while dataprovider starts at {df_dp['date'].iloc[0]} and"
-                                f"ends at {df_dp['date'].iloc[0]}."
-                            )
+    #                 try:
+    #                     index = (
+    #                         df_dp.loc[df_dp["date"] == hist_df.iloc[-1]["date"]].index[
+    #                             0
+    #                         ]
+    #                         + 1
+    #                     )
+    #                 except IndexError:
+    #                     if hist_df.iloc[-1]["date"] < df_dp["date"].iloc[0]:
+    #                         raise OperationalException(
+    #                             "In memory historical data is older than "
+    #                             f"oldest DataProvider candle for {instrument} on "
+    #                             f"timeframe {tf}"
+    #                         )
+    #                     else:
+    #                         index = -1
+    #                         logger.warning(
+    #                             f"No common dates in historical data and dataprovider for {instrument}. "
+    #                             f"Appending latest dataprovider candle to historical data "
+    #                             "but please be aware that there is likely a gap in the historical "
+    #                             "data. \n"
+    #                             f"Historical data ends at {hist_df.iloc[-1]['date']} "
+    #                             f"while dataprovider starts at {df_dp['date'].iloc[0]} and"
+    #                             f"ends at {df_dp['date'].iloc[0]}."
+    #                         )
 
-                    history_data[instrument][tf] = pd.concat(
-                        [
-                            hist_df,
-                            df_dp.iloc[index:],
-                        ],
-                        ignore_index=True,
-                        axis=0,
-                    )
+    #                 history_data[instrument][tf] = pd.concat(
+    #                     [
+    #                         hist_df,
+    #                         df_dp.iloc[index:],
+    #                     ],
+    #                     ignore_index=True,
+    #                     axis=0,
+    #                 )
 
-            self.current_candle = history_data[data_kitchen.instrument][
-                self.config["timeframe"]
-            ].iloc[-1]["date"]
+    #         self.current_candle = history_data[data_kitchen.instrument][
+    #             self.config["timeframe"]
+    #         ].iloc[-1]["date"]
 
-    def load_all_instrument_histories(
-        self, timerange: TimeRange, data_kitchen: NautilusAIDataKitchen
-    ) -> None:
-        """
-        Load instrument histories for all whitelist and corr_instrumentlist instruments.
-        Only called once upon startup of bot.
-        :param timerange: TimeRange = full timerange required to populate all indicators
-                          for training according to user defined train_period_days
-        """
-        history_data = self.historic_data
+    # def load_all_instrument_histories(
+    #     self, timerange: TimeRange, data_kitchen: NautilusAIDataKitchen
+    # ) -> None:
+    #     """
+    #     Load instrument histories for all whitelist and corr_instrumentlist instruments.
+    #     Only called once upon startup of bot.
+    #     :param timerange: TimeRange = full timerange required to populate all indicators
+    #                       for training according to user defined train_period_days
+    #     """
+    #     history_data = self.historic_data
 
-        for instrument in data_kitchen.all_instruments:
-            if instrument not in history_data:
-                history_data[instrument] = {}
-            for tf in self.nautilus_ai_info.feature_parameters.include_timeframes:
-                history_data[instrument][tf] = load_instrument_history(
-                    datadir=self.config["datadir"],
-                    timeframe=tf,
-                    instrument=instrument,
-                    timerange=timerange,
-                    data_format=self.config.get("dataformat_ohlcv", "feather"),
-                    candle_type=self.config.get("candle_type_def", CandleType.SPOT),
-                )
+    #     for instrument in data_kitchen.all_instruments:
+    #         if instrument not in history_data:
+    #             history_data[instrument] = {}
+    #         for tf in self.nautilus_ai_info.feature_parameters.include_timeframes:
+    #             history_data[instrument][tf] = load_instrument_history(
+    #                 datadir=self.config["datadir"],
+    #                 timeframe=tf,
+    #                 instrument=instrument,
+    #                 timerange=timerange,
+    #                 data_format=self.config.get("dataformat_ohlcv", "feather"),
+    #                 candle_type=self.config.get("candle_type_def", CandleType.SPOT),
+    #             )
 
-    def get_base_and_corr_dataframes(
-        self, timerange: TimeRange, instrument: str, data_kitchen: NautilusAIDataKitchen
-    ) -> tuple[dict[Any, Any], dict[Any, Any]]:
-        """
-        Searches through our historic_data in memory and returns the dataframes relevant
-        to the present instrument.
-        :param timerange: TimeRange = full timerange required to populate all indicators
-                          for training according to user defined train_period_days
-        :param metadata: dict = strategy furnished instrument metadata
-        """
-        with self.history_lock:
-            corr_dataframes: dict[Any, Any] = {}
-            base_dataframes: dict[Any, Any] = {}
-            historic_data = self.historic_data
-            instruments = (
-                self.nautilus_ai_info.feature_parameters.include_corr_instrumentlist
-            )
+    # def get_base_and_corr_dataframes(
+    #     self, timerange: TimeRange, instrument: str, data_kitchen: NautilusAIDataKitchen
+    # ) -> tuple[dict[Any, Any], dict[Any, Any]]:
+    #     """
+    #     Searches through our historic_data in memory and returns the dataframes relevant
+    #     to the present instrument.
+    #     :param timerange: TimeRange = full timerange required to populate all indicators
+    #                       for training according to user defined train_period_days
+    #     :param metadata: dict = strategy furnished instrument metadata
+    #     """
+    #     with self.history_lock:
+    #         corr_dataframes: dict[Any, Any] = {}
+    #         base_dataframes: dict[Any, Any] = {}
+    #         historic_data = self.historic_data
+    #         instruments = (
+    #             self.nautilus_ai_info.feature_parameters.include_corr_instrumentlist
+    #         )
 
-            for tf in self.nautilus_ai_info.feature_parameters.include_timeframes:
-                base_dataframes[tf] = data_kitchen.slice_dataframe(
-                    timerange, historic_data[instrument][tf]
-                ).reset_index(drop=True)
-                if instruments:
-                    for p in instruments:
-                        if instrument in p:
-                            continue  # dont repeat anything from whitelist
-                        if p not in corr_dataframes:
-                            corr_dataframes[p] = {}
-                        corr_dataframes[p][tf] = data_kitchen.slice_dataframe(
-                            timerange, historic_data[p][tf]
-                        ).reset_index(drop=True)
+    #         for tf in self.nautilus_ai_info.feature_parameters.include_timeframes:
+    #             base_dataframes[tf] = data_kitchen.slice_dataframe(
+    #                 timerange, historic_data[instrument][tf]
+    #             ).reset_index(drop=True)
+    #             if instruments:
+    #                 for p in instruments:
+    #                     if instrument in p:
+    #                         continue  # dont repeat anything from whitelist
+    #                     if p not in corr_dataframes:
+    #                         corr_dataframes[p] = {}
+    #                     corr_dataframes[p][tf] = data_kitchen.slice_dataframe(
+    #                         timerange, historic_data[p][tf]
+    #                     ).reset_index(drop=True)
 
-        return corr_dataframes, base_dataframes
+    #     return corr_dataframes, base_dataframes
 
-    def get_timerange_from_live_historic_predictions(self) -> TimeRange:
-        """
-        Returns timerange information based on historic predictions file
-        :return: timerange calculated from saved live data
-        """
-        if not self.historic_predictions_path.is_file():
-            raise OperationalException(
-                "Historic predictions not found. Historic predictions data is required "
-                "to run backtest with the freqai-backtest-live-models option "
-            )
+    # def get_timerange_from_live_historic_predictions(self) -> TimeRange:
+    #     """
+    #     Returns timerange information based on historic predictions file
+    #     :return: timerange calculated from saved live data
+    #     """
+    #     if not self.historic_predictions_path.is_file():
+    #         raise OperationalException(
+    #             "Historic predictions not found. Historic predictions data is required "
+    #             "to run backtest with the freqai-backtest-live-models option "
+    #         )
 
-        self.load_historic_predictions_from_disk()
+    #     self.load_historic_predictions_from_disk()
 
-        all_instruments_end_dates = []
-        for instrument in self.historic_predictions:
-            instrument_historic_data = self.historic_predictions[instrument]
-            all_instruments_end_dates.append(instrument_historic_data.date_pred.max())
+    #     all_instruments_end_dates = []
+    #     for instrument in self.historic_predictions:
+    #         instrument_historic_data = self.historic_predictions[instrument]
+    #         all_instruments_end_dates.append(instrument_historic_data.date_pred.max())
 
-        global_metadata = self.load_global_metadata_from_disk()
-        start_date = datetime.fromtimestamp(int(global_metadata["start_dry_live_date"]))
-        end_date = max(all_instruments_end_dates)
-        # add 1 day to string timerange to ensure BT module will load all dataframe data
-        end_date = end_date + timedelta(days=1)
-        backtesting_timerange = TimeRange(
-            "date", "date", int(start_date.timestamp()), int(end_date.timestamp())
-        )
-        return backtesting_timerange
+    #     global_metadata = self.load_global_metadata_from_disk()
+    #     start_date = datetime.fromtimestamp(int(global_metadata["start_dry_live_date"]))
+    #     end_date = max(all_instruments_end_dates)
+    #     # add 1 day to string timerange to ensure BT module will load all dataframe data
+    #     end_date = end_date + timedelta(days=1)
+    #     backtesting_timerange = TimeRange(
+    #         "date", "date", int(start_date.timestamp()), int(end_date.timestamp())
+    #     )
+    #     return backtesting_timerange

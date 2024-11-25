@@ -1,5 +1,7 @@
-from typing import List, Dict
+from pathlib import Path
+from typing import Any, List, Dict
 import pandas as pd
+import rapidjson
 from nautilus_trader.core.datetime import nanos_to_secs
 from nautilus_trader.model.data import Bar, BarType
 from nautilus_trader.model.enums import AggregationSource
@@ -52,8 +54,12 @@ def bars_to_dataframe(
 
     def _bars_to_frame(bars, instrument_id):
         # Create DataFrame for each instrument and cast specified columns to float
-        df = pd.DataFrame([Bar.to_dict(t) for t in bars]).astype({col: float for col in columns})
-        return df.assign(instrument_id=instrument_id).set_index(["instrument_id", "ts_init"])
+        df = pd.DataFrame([Bar.to_dict(t) for t in bars]).astype(
+            {col: float for col in columns}
+        )
+        return df.assign(instrument_id=instrument_id).set_index(
+            ["instrument_id", "ts_init"]
+        )
 
     # Convert each instrument's bars to DataFrame and concatenate them
     all_dataframes = [
@@ -62,7 +68,12 @@ def bars_to_dataframe(
     ]
 
     # Concatenate data for all instruments and select specified columns
-    data = pd.concat(all_dataframes)[columns].unstack(0).sort_index().fillna(method="ffill")
+    data = (
+        pd.concat(all_dataframes)[columns]
+        .unstack(0)
+        .sort_index()
+        .fillna(method="ffill")
+    )
 
     # Convert index to datetime and drop rows with NaN values in the specified columns
     data.index = pd.to_datetime(data.index)
@@ -91,7 +102,9 @@ def pair_bars_to_dataframe(
 ) -> pd.DataFrame:
     def _bars_to_frame(bars, instrument_id):
         df = pd.DataFrame([t.to_dict(t) for t in bars]).astype({"close": float})
-        return df.assign(instrument_id=instrument_id).set_index(["instrument_id", "ts_init"])
+        return df.assign(instrument_id=instrument_id).set_index(
+            ["instrument_id", "ts_init"]
+        )
 
     ldf = _bars_to_frame(bars=source_bars, instrument_id=source_id)
     rdf = _bars_to_frame(bars=target_bars, instrument_id=target_id)
@@ -113,3 +126,36 @@ def human_readable_duration(ns: float):
         ]
     )
 
+
+def timeframe_to_seconds(timeframe: str) -> int:
+    """
+    Translates the timeframe interval value written in the human readable
+    form ('1m', '5m', '1h', '1d', '1w', etc.) to the number
+    of seconds for one timeframe interval.
+    """
+    return ccxt.Exchange.parse_timeframe(timeframe)
+
+
+def record_params(config: dict[str, Any], full_path: Path) -> None:
+    """
+    Records run params in the full path for reproducibility
+    """
+    params_record_path = full_path / "run_params.json"
+
+    run_params = {
+        "freqai": config.get("freqai", {}),
+        "timeframe": config.get("timeframe"),
+        "stake_amount": config.get("stake_amount"),
+        "stake_currency": config.get("stake_currency"),
+        "max_open_trades": config.get("max_open_trades"),
+        "pairs": config.get("exchange", {}).get("pair_whitelist"),
+    }
+
+    with params_record_path.open("w") as handle:
+        rapidjson.dump(
+            run_params,
+            handle,
+            indent=4,
+            default=str,
+            number_mode=rapidjson.NM_NATIVE | rapidjson.NM_NAN,
+        )

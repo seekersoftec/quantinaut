@@ -1,8 +1,13 @@
 from typing import Dict, List
+from decimal import Decimal
 from nautilus_trader.config import ActorConfig
+from nautilus_trader.core.data import Data
+from nautilus_trader.model.instruments import Instrument
+from nautilus_trader.model.identifiers import InstrumentId
+from nautilus_trader.model.data import BarType
 
 
-class ModelTrainingParameters:
+class ModelTrainingParameters(Data):
     """
     Configuration for ``ModelTrainingParameters`` instances.
 
@@ -53,15 +58,54 @@ class ModelTrainingParameters:
       parameters like `n_epochs` or `batch_size`.
     """
 
-    learning_rate: float = 3e-4
-    n_estimators: int = 100
-    parallel_processing: Dict[str, float] | None = None
+    def __init__(
+        self,
+        learning_rate: float = 3e-4,
+        n_estimators: int = 100,
+        parallel_processing: Dict[str, float] | None = None,
+        model_kwargs: dict = {},
+        n_epochs: int | None = 10,
+        n_steps: int | None = None,
+        batch_size: int = 64,
+        ts_event: int = 0,
+        ts_init: int = 0,
+    ):
+        self.learning_rate: float = learning_rate
+        self.n_estimators: int = n_estimators
+        self.parallel_processing: Dict[str, float] | None = parallel_processing
 
-    # PyTorch-specific parameters
-    model_kwargs: dict = {}
-    n_epochs: int | None = 10
-    n_steps: int | None = None
-    batch_size: int = 64
+        # PyTorch-specific parameters
+        self.model_kwargs: dict = model_kwargs
+        self.n_epochs: int | None = n_epochs
+        self.n_steps: int | None = n_steps
+        self.batch_size: int = batch_size
+
+        self._ts_event = ts_event
+        self._ts_init = ts_init
+
+    @property
+    def ts_event(self) -> int:
+        """
+        UNIX timestamp (nanoseconds) when the data event occurred.
+
+        Returns
+        -------
+        int
+
+        """
+        return self._ts_event
+
+    @property
+    def ts_init(self) -> int:
+        """
+        UNIX timestamp (nanoseconds) when the object was initialized.
+
+        Returns
+        -------
+        int
+
+        """
+        return self._ts_init
 
 
 class RLConfig:
@@ -85,7 +129,7 @@ class RLConfig:
         The maximum drawdown percentage allowed during training.
     cpu_count : int
         Number of CPUs or threads dedicated to training. Default is total physical cores minus one.
-    model_reward_parameters : int
+    model_reward_parameters : float
         Parameters used in the custom reward function defined in the training environment.
     add_state_info : bool, default False
         Whether to include state information (e.g., trade duration, current profit, trade position) during training and inference.
@@ -103,21 +147,66 @@ class RLConfig:
     and models, providing flexibility for both hyperparameter tuning and environment-specific requirements.
     """
 
-    train_cycles: int
-    max_trade_duration_candles: int
-    model_type: str
-    policy_type: str
-    max_training_drawdown_pct: float = 0.8
-    cpu_count: int
-    model_reward_parameters: int
-    add_state_info: bool = False
-    net_arch: dict
-    randomize_starting_position: bool = False
-    drop_ohlc_from_features: bool = False
-    progress_bar: bool = False
+    def __init__(
+        self,
+        train_cycles: int,
+        max_trade_duration_candles: int,
+        model_type: str,
+        policy_type: str,
+        max_training_drawdown_pct: float = 0.8,
+        cpu_count: int = 2,
+        model_reward_parameters: float = 3,
+        add_state_info: bool = False,
+        net_arch: dict = {},
+        randomize_starting_position: bool = False,
+        drop_ohlc_from_features: bool = False,
+        progress_bar: bool = False,
+        ts_event: int = 0,
+        ts_init: int = 0,
+    ):
+
+        self.train_cycles: int = train_cycles
+        self.max_trade_duration_candles: int = max_trade_duration_candles
+        self.model_type: str = model_type
+        self.policy_type: str = policy_type
+        self.max_training_drawdown_pct: float = max_training_drawdown_pct
+        self.cpu_count: int = cpu_count
+        self.model_reward_parameters: int = model_reward_parameters
+        self.add_state_info: bool = add_state_info
+        self.net_arch: dict = net_arch
+        self.randomize_starting_position: bool = randomize_starting_position
+        self.drop_ohlc_from_features: bool = drop_ohlc_from_features
+        self.progress_bar: bool = progress_bar
+
+        self._ts_event = ts_event
+        self._ts_init = ts_init
+
+    @property
+    def ts_event(self) -> int:
+        """
+        UNIX timestamp (nanoseconds) when the data event occurred.
+
+        Returns
+        -------
+        int
+
+        """
+        return self._ts_event
+
+    @property
+    def ts_init(self) -> int:
+        """
+        UNIX timestamp (nanoseconds) when the object was initialized.
+
+        Returns
+        -------
+        int
+
+        """
+        return self._ts_init
 
 
-class FeatureParameters:
+class FeatureParameters(Data):
     """
     Configuration for FeatureParameters instances, covering both general model training
     parameters and reinforcement learning-specific parameters.
@@ -130,7 +219,7 @@ class FeatureParameters:
         Number of steps into the future for predictions.
     include_timeframes : List[String]
         List of timeframes to include in feature engineering.
-    include_corr_pairlist : List[String]
+    include_corr_instrumentlist : List[String]
         List of correlated instruments to include in feature generation.
     label_period_candles : Integer
         Number of candles used for label generation.
@@ -170,24 +259,74 @@ class FeatureParameters:
     and models, providing flexibility for both hyperparameter tuning and environment-specific requirements.
     """
 
-    include_timeframes: List[str] = []
-    include_corr_pairlist: List[str] = []
-    label_period_candles: int
-    include_shifted_candles: int
-    weight_factor: float = 0.4
-    indicator_max_period_candles: int
-    indicator_periods_candles: List[int]
-    principal_component_analysis: bool = False
-    plot_feature_importances: int = 0
-    DI_threshold: float = 0
-    use_SVM_to_remove_outliers: bool
-    svm_params: dict
-    use_DBSCAN_to_remove_outliers: bool
-    noise_standard_deviation: int = 0
-    outlier_protection_percentage: float = 30
-    reverse_train_test_order: bool = False
-    shuffle_after_split: bool = False
-    buffer_train_data_candles: int = 0
+    def __init__(
+        self,
+        include_timeframes: List[str] = [],
+        include_corr_instrumentlist: List[str] = [],
+        label_period_candles: int = 0,
+        include_shifted_candles: int = 0,
+        weight_factor: float = 0.4,
+        indicator_max_period_candles: int = 0,
+        indicator_periods_candles: List[int] = [2, 4],
+        principal_component_analysis: bool = False,
+        plot_feature_importances: int = 0,
+        DI_threshold: float = 0,
+        use_SVM_to_remove_outliers: bool = False,
+        svm_params: dict = {},
+        use_DBSCAN_to_remove_outliers: bool = False,
+        noise_standard_deviation: int = 0,
+        outlier_protection_percentage: float = 0.3,
+        reverse_train_test_order: bool = False,
+        shuffle_after_split: bool = False,
+        buffer_train_data_candles: int = 0,
+        ts_event: int = 0,
+        ts_init: int = 0,
+    ):
+        self.include_timeframes: List[str] = include_timeframes
+        self.include_corr_instrumentlist: List[str] = include_corr_instrumentlist
+        self.label_period_candles: int = label_period_candles
+        self.include_shifted_candles: int = include_shifted_candles
+        self.weight_factor: float = weight_factor
+        self.indicator_max_period_candles: int = indicator_max_period_candles
+        self.indicator_periods_candles: List[int] = indicator_periods_candles
+        self.principal_component_analysis: bool = principal_component_analysis
+        self.plot_feature_importances: int = plot_feature_importances
+        self.DI_threshold: float = DI_threshold
+        self.use_SVM_to_remove_outliers: bool = use_SVM_to_remove_outliers
+        self.svm_params: dict = svm_params
+        self.use_DBSCAN_to_remove_outliers: bool = use_DBSCAN_to_remove_outliers
+        self.noise_standard_deviation: int = noise_standard_deviation
+        self.outlier_protection_percentage: float = outlier_protection_percentage
+        self.reverse_train_test_order: bool = reverse_train_test_order
+        self.shuffle_after_split: bool = shuffle_after_split
+        self.buffer_train_data_candles: int = buffer_train_data_candles
+
+        self._ts_event = ts_event
+        self._ts_init = ts_init
+
+    @property
+    def ts_event(self) -> int:
+        """
+        UNIX timestamp (nanoseconds) when the data event occurred.
+
+        Returns
+        -------
+        int
+
+        """
+        return self._ts_event
+
+    @property
+    def ts_init(self) -> int:
+        """
+        UNIX timestamp (nanoseconds) when the object was initialized.
+
+        Returns
+        -------
+        int
+
+        """
+        return self._ts_init
 
 
 class INautilusAIModelConfig(ActorConfig):
@@ -196,7 +335,7 @@ class INautilusAIModelConfig(ActorConfig):
 
     Parameters
     ----------
-    instrument_id : InstrumentId[]
+    instrument_ids : InstrumentId[]
         The instrument ID for the strategy.
     bar_type : BarType
         The bar type for the strategy.
@@ -211,7 +350,7 @@ class INautilusAIModelConfig(ActorConfig):
         Days to infer from the trained model before retraining in backtesting.
     identifier : String
         Unique identifier for the model. Useful for saving/loading pre-trained models.
-    live_retrain_hours : String, default 0.0
+    live_retrain_hours : PositiveFloat, default 0.0
         Frequency of retraining during live runs. Default: retrains as often as possible.
     expiration_hours : PositiveInt, default 0
         Prediction validity duration. Default: models never expire.
@@ -272,25 +411,42 @@ class INautilusAIModelConfig(ActorConfig):
     For more checkout => https://www.freqtrade.io/en/stable/freqai-parameter-table/
     """
 
+    # Nautilus params
+    instrument_ids_str: List[str] | None = None
+    bar_spec: str | None = None
+    trade_size: Decimal = Decimal("0.10")
+
     # General configuration parameters
     train_period_days: int = 0
     backtest_period_days: int = 7
     identifier: str = "no_id_provided"
-    live_retrain_hours: str
+    live_retrain_hours: int = 0
     expiration_hours: int = 0
     purge_old_models: int = 2
     save_backtest_models: bool = True
-    fit_live_predictions_candles: int
+    fit_live_predictions_candles: int = 0
     continual_learning: bool = False
     write_metrics_to_disk: bool = False
     data_kitchen_thread_count: int = 0
     activate_tensorboard: bool = True
     wait_for_training_iteration_on_reload: bool = True
 
+    # time_handler = TimeHandler(config={"timerange": "20220101-20231231"})
+    # training_list, backtesting_list = time_handler.split_timerange("20220101-20231231", train_split=30, bt_split=7)
+    # data_dict = time_handler.build_data_dictionary(train_df, test_df, train_labels, test_labels, train_weights, test_weights)
+    timerange: str = ""  # "20220101-20231231"
+
+    # We notice that users like to use exotic indicators where
+    # they do not know the required timeperiod. Here we include a factor
+    # of safety by multiplying the user considered "max" by 2.
+    startup_candle_count: int = 20
+
+    user_data_dir: str = "data"
+
     model_save_type: str = "joblib"
 
     # Feature parameters
-    feature_parameters: FeatureParameters = FeatureParameters()
+    feature_parameters: FeatureParameters | None = None
 
     # Data split parameters
     train_interval_minutes: int = 60  # Interval between training sessions

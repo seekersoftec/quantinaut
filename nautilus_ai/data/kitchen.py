@@ -1,11 +1,9 @@
 import copy
-import inspect
-import logging
 import random
 import shutil
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 import numpy.typing as npt
@@ -19,9 +17,10 @@ from nautilus_trader.core.data import Data
 from nautilus_trader.model.instruments import Instrument
 
 from nautilus_ai.common.logging import Logger
+from nautilus_ai.common.timerange import TimeRange
+from nautilus_ai.common.utils import timeframe_to_seconds
 from nautilus_ai.config import INautilusAIModelConfig
-from nautilus_ai.data.types import TimeRange
-from nautilus_ai.exceptions import OperationalException
+from nautilus_ai.exceptions import ConfigurationError, OperationalException
 from nautilus_ai.common.constants import DOCS_LINK
 
 pd.set_option("future.no_silent_downcasting", True)
@@ -326,17 +325,29 @@ class NautilusAIDataKitchen(Data):
         test_labels: DataFrame,
         train_weights: Any,
         test_weights: Any,
-    ) -> dict:
+    ) -> Dict[str, Any]:
         """
-        Builds and returns a dictionary containing training and testing datasets along with their labels and weights.
+        Constructs a dictionary containing training and testing datasets, labels, and weights.
 
-        :param train_df: DataFrame containing training features.
-        :param test_df: DataFrame containing testing features.
-        :param train_labels: DataFrame containing training labels.
-        :param test_labels: DataFrame containing testing labels.
-        :param train_weights: Training sample weights.
-        :param test_weights: Testing sample weights.
-        :return: A dictionary encapsulating all provided data.
+        Parameters:
+        -----------
+        train_df : DataFrame
+            Training features dataset.
+        test_df : DataFrame
+            Testing features dataset.
+        train_labels : DataFrame
+            Labels corresponding to training features.
+        test_labels : DataFrame
+            Labels corresponding to testing features.
+        train_weights : Any
+            Weights associated with the training samples.
+        test_weights : Any
+            Weights associated with the testing samples.
+
+        Returns:
+        --------
+        Dict[str, Any]
+            Dictionary encapsulating the training and testing datasets, labels, and weights.
         """
         self.data_dictionary = {
             "train_features": train_df,
@@ -350,26 +361,42 @@ class NautilusAIDataKitchen(Data):
         return self.data_dictionary
 
     def split_timerange(
-        self, tr: str, train_split: int = 28, bt_split: float = 7
-    ) -> Tuple[List, List]:
+        self, tr: str, train_split: int = 28, bt_split: float = 7.0
+    ) -> Tuple[List[TimeRange], List[TimeRange]]:
         """
-        Splits a given time range into training and backtesting sub-ranges.
+        Splits a time range into training and backtesting sub-ranges.
 
-        :param tr: String representing the full time range to split.
-        :param train_split: Number of days for each training period.
-        :param bt_split: Number of days for each backtesting period.
-        :return: A tuple of lists containing training and backtesting time ranges.
+        Parameters:
+        -----------
+        tr : str
+            Full timerange in a valid format to be split (e.g., "20220101-20230101").
+        train_split : int, optional
+            Number of days for each training period (default is 28).
+        bt_split : float, optional
+            Number of days for each backtesting period (default is 7.0).
+
+        Returns:
+        --------
+        Tuple[List[TimeRange], List[TimeRange]]
+            Lists of training and backtesting time ranges.
+
+        Raises:
+        -------
+        ValueError
+            If `train_split` is not a positive integer.
         """
         if not isinstance(train_split, int) or train_split < 1:
             raise ValueError(
                 f"train_split must be an integer greater than 0. Got {train_split}."
             )
-        train_period_days = train_split * SECONDS_IN_DAY
-        bt_period = bt_split * SECONDS_IN_DAY
+
+        train_period_seconds = train_split * SECONDS_IN_DAY
+        backtest_period_seconds = int(bt_split * SECONDS_IN_DAY)
 
         full_timerange = TimeRange.parse_timerange(tr)
-        config_timerange = TimeRange.parse_timerange(self.config["timerange"])
+        config_timerange = TimeRange.parse_timerange(self.config.timerange)
 
+        # If stop timestamp is undefined in config, set it to the current UTC time
         if config_timerange.stopts == 0:
             config_timerange.stopts = int(datetime.now(tz=timezone.utc).timestamp())
 
@@ -382,32 +409,56 @@ class NautilusAIDataKitchen(Data):
 
         while True:
             if not first_iteration:
-                timerange_train.startts += int(bt_period)
-            timerange_train.stopts = timerange_train.startts + train_period_days
+                timerange_train.startts += backtest_period_seconds
+            timerange_train.stopts = timerange_train.startts + train_period_seconds
 
+            # Add training range
             tr_training_list.append(copy.deepcopy(timerange_train))
 
+            # Set up backtesting range based on the training range
             timerange_backtest.startts = timerange_train.stopts
-            timerange_backtest.stopts = timerange_backtest.startts + int(bt_period)
+            timerange_backtest.stopts = (
+                timerange_backtest.startts + backtest_period_seconds
+            )
 
+            # Ensure backtesting stop date doesn't exceed config's timerange
             if timerange_backtest.stopts > config_timerange.stopts:
                 timerange_backtest.stopts = config_timerange.stopts
 
+            # Add backtesting range
             tr_backtesting_list.append(copy.deepcopy(timerange_backtest))
 
+            # Break loop if we've reached the end of the configured timerange
             if timerange_backtest.stopts == config_timerange.stopts:
                 break
+
             first_iteration = False
 
         return tr_training_list, tr_backtesting_list
 
     def slice_dataframe(self, timerange: TimeRange, df: DataFrame) -> DataFrame:
         """
-        Extracts a specific time window from a DataFrame based on the provided timerange.
+        Extracts a slice of the DataFrame based on the specified timerange.
 
-        :param timerange: The timerange object specifying the desired window.
-        :param df: The input DataFrame containing all data.
-        :return: A sliced DataFrame for the specified timerange.
+        Parameters:
+        -----------
+        timerange : TimeRange
+            The timerange object specifying the desired data window.
+        df : DataFrame
+            The input DataFrame containing all data.
+
+        Returns:
+        --------
+        DataFrame
+            Sliced DataFrame for the specified timerange.
+
+        Notes:
+        ------
+        - If `self.live` is True, the DataFrame is filtered to include all rows
+          from `timerange.startdt` onward.
+        - If `self.live` is False, the DataFrame is filtered to include rows
+          within the range `[timerange.startdt, timerange.stopdt)`.
+
         """
         if not self.live:
             return df.loc[
@@ -419,8 +470,19 @@ class NautilusAIDataKitchen(Data):
         """
         Identifies feature columns in the DataFrame.
 
-        :param dataframe: DataFrame containing data for feature identification.
-        :raises ValueError: If no features are found.
+        Parameters:
+        -----------
+        dataframe : DataFrame
+            DataFrame containing data for feature identification.
+
+        Raises:
+        -------
+        ValueError
+            If no feature columns are found in the DataFrame.
+
+        Notes:
+        ------
+        - Feature columns are identified by the presence of `%` in their names.
         """
         features = [col for col in dataframe.columns if "%" in col]
         if not features:
@@ -431,93 +493,751 @@ class NautilusAIDataKitchen(Data):
         """
         Identifies label columns in the DataFrame.
 
-        :param dataframe: DataFrame containing data for label identification.
+        Parameters:
+        -----------
+        dataframe : DataFrame
+            DataFrame containing data for label identification.
+
+        Notes:
+        ------
+        - Label columns are identified by the presence of `&` in their names.
         """
         self.label_list = [col for col in dataframe.columns if "&" in col]
 
     def set_weights_higher_recent(self, num_weights: int) -> npt.ArrayLike:
         """
-        Generates weights that assign higher importance to recent data.
+        Generates an array of weights that assigns higher importance to recent data.
 
-        :param num_weights: Number of weights to generate.
-        :return: Array of weights with recent data weighted higher.
+        Parameters:
+        -----------
+        num_weights : int
+            Number of weights to generate.
+
+        Returns:
+        --------
+        npt.ArrayLike
+            Array of weights with recent data weighted higher.
+
+        Notes:
+        ------
+        - The weight distribution follows an exponential decay function.
+        - The decay rate is determined by the `weight_factor` in the configuration.
         """
-        wfactor = self.config.feature_parameters.weight_factor
+        wfactor = self.config["feature_parameters"]["weight_factor"]
         return np.exp(-np.arange(num_weights) / (wfactor * num_weights))[::-1]
 
     def append_predictions(self, append_df: DataFrame) -> None:
         """
         Appends predictions for the current backtesting period to the cumulative dataset.
 
-        :param append_df: DataFrame containing predictions to append.
+        Parameters:
+        -----------
+        append_df : DataFrame
+            DataFrame containing predictions to append.
+
+        Notes:
+        ------
+        - The predictions are appended to `self.full_df`.
+        - Assumes `append_df` contains a `date` column for alignment.
         """
+        if append_df.empty:
+            raise ValueError(
+                "The provided DataFrame `append_df` is empty and cannot be appended."
+            )
+
         self.full_df = pd.concat([self.full_df, append_df], axis=0, ignore_index=True)
 
     def fill_predictions(self, dataframe: DataFrame) -> DataFrame:
         """
-        Backfills missing predictions for earlier periods.
+        Backfills missing predictions for earlier periods by merging with cumulative predictions.
 
-        :param dataframe: DataFrame to backfill with predictions.
-        :return: Updated DataFrame with backfilled predictions.
+        Parameters:
+        -----------
+        dataframe : DataFrame
+            The input DataFrame to backfill with predictions.
+
+        Returns:
+        --------
+        DataFrame
+            Updated DataFrame with backfilled predictions.
+
+        Notes:
+        ------
+        - Non-label columns are identified and merged with `self.full_df` based on the `date` column.
+        - Missing values in predictions are filled with `0`.
+        - Resets `self.full_df` to an empty DataFrame after backfilling.
         """
+        if dataframe.empty:
+            raise ValueError(
+                "The provided DataFrame `dataframe` is empty and cannot be backfilled."
+            )
+
+        if "date" not in dataframe.columns:
+            raise KeyError(
+                "The input DataFrame `dataframe` must contain a `date` column for merging."
+            )
+
         non_label_cols = [
             col
             for col in dataframe.columns
             if not col.startswith("&") and not col.startswith("%%")
         ]
+
+        # Merge input DataFrame with cumulative predictions
         self.return_dataframe = pd.merge(
             dataframe[non_label_cols], self.full_df, how="left", on="date"
         )
+
+        # Fill missing predictions with 0
         self.return_dataframe.fillna(value=0, inplace=True)
+
+        # Reset the cumulative DataFrame
         self.full_df = DataFrame()
+
         return self.return_dataframe
 
     def create_full_timerange(self, backtest_tr: str, backtest_period_days: int) -> str:
         """
         Creates a full timerange string by extending the start of a given backtest timerange
-        backwards by a specified number of days. Also ensures the timerange is valid and
-        prepares the configuration file.
+        backwards by a specified number of days. Ensures the timerange is valid and prepares
+        the configuration file.
 
-        :param backtest_tr: str
+        Parameters:
+        -----------
+        backtest_tr : str
             Timerange string for backtesting, formatted as 'start_date:stop_date'.
-        :param backtest_period_days: int
+        backtest_period_days : int
             Number of days to extend the start of the backtest timerange backwards.
 
-        :return: str
+        Returns:
+        --------
+        str
             A string representing the full timerange for the backtest.
 
-        :raises OperationalException:
-            - If `backtest_period_days` is not a positive integer.
-            - If the backtest timerange is open-ended (no stop date is provided).
+        Raises:
+        -------
+        OperationalException
+            If `backtest_period_days` is not a positive integer.
+            If the backtest timerange is open-ended (no stop date is provided).
         """
+        # Validate `backtest_period_days`
         if not isinstance(backtest_period_days, int) or backtest_period_days <= 0:
             raise OperationalException(
-                f"backtest_period_days must be a positive integer. Got {backtest_period_days}."
+                f"`backtest_period_days` must be a positive integer. Got {backtest_period_days}."
             )
 
+        # Parse the backtest timerange
         backtest_timerange = TimeRange.parse_timerange(backtest_tr)
 
-        # Check for open-ended timeranges
+        # Ensure the timerange has an end date
         if backtest_timerange.stopts == 0:
             raise OperationalException(
-                "NautilusAI backtesting does not allow open-ended timeranges. "
-                "Please specify the end date in your backtest timerange."
+                "Backtesting does not allow open-ended timeranges. "
+                "Please specify an end date in the backtest timerange."
             )
 
-        # Extend the start of the timerange backwards by the specified number of days
+        # Extend the start of the timerange backwards
         backtest_timerange.startts -= backtest_period_days * SECONDS_IN_DAY
 
         # Generate the full timerange string
         full_timerange = backtest_timerange.timerange_str
 
-        # Ensure the configuration file is prepared in the appropriate directory
+        # Prepare configuration directory and file
+        self._prepare_config_file()
+
+        return full_timerange
+
+    def _prepare_config_file(self) -> None:
+        """
+        Ensures the configuration directory exists and copies the configuration file to it.
+
+        Raises:
+        -------
+        FileNotFoundError
+            If the configuration file does not exist.
+        """
         config_path = Path(self.config["config_files"][0])
 
         if not self.full_path.is_dir():
             self.full_path.mkdir(parents=True, exist_ok=True)
-            shutil.copy(
-                config_path.resolve(),
-                self.full_path / config_path.name,
+            try:
+                shutil.copy(config_path.resolve(), self.full_path / config_path.name)
+            except FileNotFoundError as e:
+                raise FileNotFoundError(
+                    f"Configuration file not found: {config_path.resolve()}"
+                ) from e
+
+    def check_if_model_expired(self, trained_timestamp: int) -> bool:
+        """
+        Determines if the model is expired based on user-defined `expiration_hours`.
+
+        Parameters:
+        -----------
+        trained_timestamp : int
+            The timestamp of the model's last training (in seconds since epoch).
+
+        Returns:
+        --------
+        bool
+            True if the model is expired, False otherwise.
+
+        Notes:
+        ------
+        - If `expiration_hours` is set to 0 or a negative value, the model never expires.
+        """
+        current_time = datetime.now(tz=timezone.utc).timestamp()
+        elapsed_time_hours = (current_time - trained_timestamp) / SECONDS_IN_HOUR
+        max_expiration_hours = self.config.expiration_hours
+
+        if max_expiration_hours > 0:
+            return elapsed_time_hours > max_expiration_hours
+        return False
+
+    def check_if_new_training_required(
+        self, trained_timestamp: int
+    ) -> Tuple[bool, TimeRange, TimeRange]:
+        """
+        Determines if retraining is required and prepares time ranges for training and data loading.
+
+        Parameters:
+        -----------
+        trained_timestamp : int
+            The timestamp of the model's last training (in seconds since epoch).
+
+        Returns:
+        --------
+        Tuple[bool, TimeRange, TimeRange]
+            A tuple containing:
+            - A boolean indicating if retraining is required.
+            - A TimeRange object for the training period.
+            - A TimeRange object for the data loading period.
+
+        Notes:
+        ------
+        - `trained_timerange` defines the period for training data.
+        - `data_load_timerange` includes additional time to accommodate rolling indicators.
+
+        Raises:
+        -------
+        ConfigurationError
+            If the configuration is missing required parameters.
+        """
+        current_time = datetime.now(tz=timezone.utc).timestamp()
+        trained_timerange = TimeRange()
+        data_load_timerange = TimeRange()
+
+        timeframes = self.config.feature_parameters.include_timeframes
+        if not timeframes:
+            raise ConfigurationError(
+                "Missing or invalid `include_timeframes` in configuration."
             )
 
-        return full_timerange
+        # Calculate maximum timeframe in seconds
+        max_tf_seconds = max(timeframe_to_seconds(tf) for tf in timeframes)
+
+        # Safety factor: extend period for rolling indicators
+        max_period = self.config.startup_candle_count * 2
+        additional_seconds = max_period * max_tf_seconds
+
+        train_period_days = self.config.train_period_days
+        train_period_seconds = train_period_days * SECONDS_IN_DAY
+
+        if trained_timestamp:
+            elapsed_time_hours = (current_time - trained_timestamp) / SECONDS_IN_HOUR
+            retrain = elapsed_time_hours > self.config.live_retrain_hours
+
+            if retrain:
+                trained_timerange.startts = int(current_time - train_period_seconds)
+                trained_timerange.stopts = int(current_time)
+
+                data_load_timerange.startts = int(
+                    current_time - train_period_seconds - additional_seconds
+                )
+                data_load_timerange.stopts = int(current_time)
+        else:  # No prior training timestamp provided
+            trained_timerange.startts = int(current_time - train_period_seconds)
+            trained_timerange.stopts = int(current_time)
+
+            data_load_timerange.startts = int(
+                current_time - train_period_seconds - additional_seconds
+            )
+            data_load_timerange.stopts = int(current_time)
+
+            retrain = True
+
+        return retrain, trained_timerange, data_load_timerange
+
+    #
+    # TODO: Fix the methods below
+    #
+
+    # def set_new_model_names(self, instrument: str, timestamp_id: int):
+    #     coin, _ = instrument.split("/")
+    #     self.data_path = Path(
+    #         self.full_path / f"sub-train-{instrument.split('/')[0]}_{timestamp_id}"
+    #     )
+
+    #     self.model_filename = f"cb_{coin.lower()}_{timestamp_id}"
+
+    # def set_all_instruments(self) -> None:
+    #     self.all_instruments = copy.deepcopy(
+    #         self.config.feature_parameters.include_corr_instrumentlist
+    #     )
+    #     for instrument in self.config.get("exchange", "").get("instrument_whitelist"):
+    #         if instrument not in self.all_instruments:
+    #             self.all_instruments.append(instrument)
+
+    # def extract_corr_instrument_columns_from_populated_indicators(
+    #     self, dataframe: DataFrame
+    # ) -> dict[str, DataFrame]:
+    #     """
+    #     Find the columns of the dataframe corresponding to the corr_instrumentlist, save them
+    #     in a dictionary to be reused and attached to other instruments.
+
+    #     :param dataframe: fully populated dataframe (current instrument + corr_instruments)
+    #     :return: corr_dataframes, dictionary of dataframes to be attached
+    #              to other instruments in same candle.
+    #     """
+    #     corr_dataframes: dict[str, DataFrame] = {}
+    #     instruments = self.freqai_config["feature_parameters"].get(
+    #         "include_corr_instrumentlist", []
+    #     )
+
+    #     for instrument in instruments:
+    #         instrument = instrument.replace(":", "")  # lightgbm does not like colons
+    #         instrument_cols = [
+    #             col
+    #             for col in dataframe.columns
+    #             if col.startswith("%") and f"{instrument}_" in col
+    #         ]
+
+    #         if instrument_cols:
+    #             instrument_cols.insert(0, "date")
+    #             corr_dataframes[instrument] = dataframe.filter(instrument_cols, axis=1)
+
+    #     return corr_dataframes
+
+    # def attach_corr_instrument_columns(
+    #     self,
+    #     dataframe: DataFrame,
+    #     corr_dataframes: dict[str, DataFrame],
+    #     current_instrument: str,
+    # ) -> DataFrame:
+    #     """
+    #     Attach the existing corr_instrument dataframes to the current instrument dataframe before training
+
+    #     :param dataframe: current instrument strategy dataframe, indicators populated already
+    #     :param corr_dataframes: dictionary of saved dataframes from earlier in the same candle
+    #     :param current_instrument: current instrument to which we will attach corr instrument dataframe
+    #     :return:
+    #     :dataframe: current instrument dataframe of populated indicators, concatenated with corr_instruments
+    #                 ready for training
+    #     """
+    #     instruments = self.freqai_config["feature_parameters"].get(
+    #         "include_corr_instrumentlist", []
+    #     )
+    #     current_instrument = current_instrument.replace(":", "")
+    #     for instrument in instruments:
+    #         instrument = instrument.replace(
+    #             ":", ""
+    #         )  # lightgbm does not work with colons
+    #         if current_instrument != instrument:
+    #             dataframe = dataframe.merge(
+    #                 corr_dataframes[instrument], how="left", on="date"
+    #             )
+
+    #     return dataframe
+
+    # def get_instrument_data_for_features(
+    #     self,
+    #     instrument: str,
+    #     tf: str,
+    #     strategy: IStrategy,
+    #     corr_dataframes: dict = {},
+    #     base_dataframes: dict = {},
+    #     is_corr_instruments: bool = False,
+    # ) -> DataFrame:
+    #     """
+    #     Get the data for the instrument. If it's not in the dictionary, get it from the data provider
+    #     :param instrument: str = instrument to get data for
+    #     :param tf: str = timeframe to get data for
+    #     :param strategy: IStrategy = user defined strategy object
+    #     :param corr_dataframes: dict = dict containing the df instrument dataframes
+    #                             (for user defined timeframes)
+    #     :param base_dataframes: dict = dict containing the current instrument dataframes
+    #                             (for user defined timeframes)
+    #     :param is_corr_instruments: bool = whether the instrument is a corr instrument or not
+    #     :return: dataframe = dataframe containing the instrument data
+    #     """
+    #     if is_corr_instruments:
+    #         dataframe = corr_dataframes[instrument][tf]
+    #         if not dataframe.empty:
+    #             return dataframe
+    #         else:
+    #             dataframe = strategy.dp.get_instrument_dataframe(
+    #                 instrument=instrument, timeframe=tf
+    #             )
+    #             return dataframe
+    #     else:
+    #         dataframe = base_dataframes[tf]
+    #         if not dataframe.empty:
+    #             return dataframe
+    #         else:
+    #             dataframe = strategy.dp.get_instrument_dataframe(
+    #                 instrument=instrument, timeframe=tf
+    #             )
+    #             return dataframe
+
+    # def merge_features(
+    #     self,
+    #     df_main: DataFrame,
+    #     df_to_merge: DataFrame,
+    #     tf: str,
+    #     timeframe_inf: str,
+    #     suffix: str,
+    # ) -> DataFrame:
+    #     """
+    #     Merge the features of the dataframe and remove HLCV and date added columns
+    #     :param df_main: DataFrame = main dataframe
+    #     :param df_to_merge: DataFrame = dataframe to merge
+    #     :param tf: str = timeframe of the main dataframe
+    #     :param timeframe_inf: str = timeframe of the dataframe to merge
+    #     :param suffix: str = suffix to add to the columns of the dataframe to merge
+    #     :return: dataframe = merged dataframe
+    #     """
+    #     dataframe = merge_informative_instrument(
+    #         df_main,
+    #         df_to_merge,
+    #         tf,
+    #         timeframe_inf=timeframe_inf,
+    #         append_timeframe=False,
+    #         suffix=suffix,
+    #         ffill=True,
+    #     )
+    #     skip_columns = [
+    #         (f"{s}_{suffix}")
+    #         for s in ["date", "open", "high", "low", "close", "volume"]
+    #     ]
+    #     dataframe = dataframe.drop(columns=skip_columns)
+    #     return dataframe
+
+    # def populate_features(
+    #     self,
+    #     dataframe: DataFrame,
+    #     instrument: str,
+    #     strategy: IStrategy,
+    #     corr_dataframes: dict,
+    #     base_dataframes: dict,
+    #     is_corr_instruments: bool = False,
+    # ) -> DataFrame:
+    #     """
+    #     Use the user defined strategy functions for populating features
+    #     :param dataframe: DataFrame = dataframe to populate
+    #     :param instrument: str = instrument to populate
+    #     :param strategy: IStrategy = user defined strategy object
+    #     :param corr_dataframes: dict = dict containing the df instrument dataframes
+    #     :param base_dataframes: dict = dict containing the current instrument dataframes
+    #     :param is_corr_instruments: bool = whether the instrument is a corr instrument or not
+    #     :return: dataframe = populated dataframe
+    #     """
+    #     tfs: list[str] = self.freqai_config["feature_parameters"].get(
+    #         "include_timeframes"
+    #     )
+
+    #     for tf in tfs:
+    #         metadata = {"instrument": instrument, "tf": tf}
+    #         informative_df = self.get_instrument_data_for_features(
+    #             instrument,
+    #             tf,
+    #             strategy,
+    #             corr_dataframes,
+    #             base_dataframes,
+    #             is_corr_instruments,
+    #         )
+    #         informative_copy = informative_df.copy()
+
+    #         logger.debug(f"Populating features for {instrument} {tf}")
+
+    #         for t in self.freqai_config["feature_parameters"][
+    #             "indicator_periods_candles"
+    #         ]:
+    #             df_features = strategy.feature_engineering_expand_all(
+    #                 informative_copy.copy(), t, metadata=metadata
+    #             )
+    #             suffix = f"{t}"
+    #             informative_df = self.merge_features(
+    #                 informative_df, df_features, tf, tf, suffix
+    #             )
+
+    #         generic_df = strategy.feature_engineering_expand_basic(
+    #             informative_copy.copy(), metadata=metadata
+    #         )
+    #         suffix = "gen"
+
+    #         informative_df = self.merge_features(
+    #             informative_df, generic_df, tf, tf, suffix
+    #         )
+
+    #         indicators = [col for col in informative_df if col.startswith("%")]
+    #         for n in range(
+    #             self.freqai_config["feature_parameters"]["include_shifted_candles"] + 1
+    #         ):
+    #             if n == 0:
+    #                 continue
+    #             df_shift = informative_df[indicators].shift(n)
+    #             df_shift = df_shift.add_suffix("_shift-" + str(n))
+    #             informative_df = pd.concat((informative_df, df_shift), axis=1)
+
+    #         dataframe = self.merge_features(
+    #             dataframe.copy(),
+    #             informative_df,
+    #             self.config["timeframe"],
+    #             tf,
+    #             f"{instrument}_{tf}",
+    #         )
+
+    #     return dataframe
+
+    # def use_strategy_to_populate_indicators(  # noqa: C901
+    #     self,
+    #     strategy: IStrategy,
+    #     corr_dataframes: dict = {},
+    #     base_dataframes: dict = {},
+    #     instrument: str = "",
+    #     prediction_dataframe: DataFrame = pd.DataFrame(),
+    #     do_corr_instruments: bool = True,
+    # ) -> DataFrame:
+    #     """
+    #     Use the user defined strategy for populating indicators during retrain
+    #     :param strategy: IStrategy = user defined strategy object
+    #     :param corr_dataframes: dict = dict containing the df instrument dataframes
+    #                             (for user defined timeframes)
+    #     :param base_dataframes: dict = dict containing the current instrument dataframes
+    #                             (for user defined timeframes)
+    #     :param instrument: str = instrument to populate
+    #     :param prediction_dataframe: DataFrame = dataframe containing the instrument data
+    #     used for prediction
+    #     :param do_corr_instruments: bool = whether to populate corr instruments or not
+    #     :return:
+    #     dataframe: DataFrame = dataframe containing populated indicators
+    #     """
+
+    #     # check if the user is using the deprecated populate_any_indicators function
+    #     new_version = inspect.getsource(strategy.populate_any_indicators) == (
+    #         inspect.getsource(IStrategy.populate_any_indicators)
+    #     )
+
+    #     if not new_version:
+    #         raise OperationalException(
+    #             "You are using the `populate_any_indicators()` function"
+    #             " which was deprecated on March 1, 2023. Please refer "
+    #             "to the strategy migration guide to use the new "
+    #             "feature_engineering_* methods: \n"
+    #             f"{DOCS_LINK}/strategy_migration/#freqai-strategy \n"
+    #             "And the feature_engineering_* documentation: \n"
+    #             f"{DOCS_LINK}/freqai-feature-engineering/"
+    #         )
+
+    #     tfs: list[str] = self.freqai_config["feature_parameters"].get(
+    #         "include_timeframes"
+    #     )
+    #     instruments: list[str] = self.freqai_config["feature_parameters"].get(
+    #         "include_corr_instrumentlist", []
+    #     )
+
+    #     for tf in tfs:
+    #         if tf not in base_dataframes:
+    #             base_dataframes[tf] = pd.DataFrame()
+    #         for p in instruments:
+    #             if p not in corr_dataframes:
+    #                 corr_dataframes[p] = {}
+    #             if tf not in corr_dataframes[p]:
+    #                 corr_dataframes[p][tf] = pd.DataFrame()
+
+    #     if not prediction_dataframe.empty:
+    #         dataframe = prediction_dataframe.copy()
+    #         base_dataframes[self.config["timeframe"]] = dataframe.copy()
+    #     else:
+    #         dataframe = base_dataframes[self.config["timeframe"]].copy()
+
+    #     corr_instruments: list[str] = self.freqai_config["feature_parameters"].get(
+    #         "include_corr_instrumentlist", []
+    #     )
+    #     dataframe = self.populate_features(
+    #         dataframe.copy(), instrument, strategy, corr_dataframes, base_dataframes
+    #     )
+    #     metadata = {"instrument": instrument}
+    #     dataframe = strategy.feature_engineering_standard(
+    #         dataframe.copy(), metadata=metadata
+    #     )
+    #     # ensure corr instruments are always last
+    #     for corr_instrument in corr_instruments:
+    #         if instrument == corr_instrument:
+    #             continue  # dont repeat anything from whitelist
+    #         if corr_instruments and do_corr_instruments:
+    #             dataframe = self.populate_features(
+    #                 dataframe.copy(),
+    #                 corr_instrument,
+    #                 strategy,
+    #                 corr_dataframes,
+    #                 base_dataframes,
+    #                 True,
+    #             )
+
+    #     if self.live:
+    #         dataframe = strategy.set_freqai_targets(dataframe.copy(), metadata=metadata)
+    #         dataframe = self.remove_special_chars_from_feature_names(dataframe)
+
+    #     self.get_unique_classes_from_labels(dataframe)
+
+    #     if self.config.get("reduce_df_footprint", False):
+    #         dataframe = reduce_dataframe_footprint(dataframe)
+
+    #     return dataframe
+
+    # def fit_labels(self) -> None:
+    #     """
+    #     Fit the labels with a gaussian distribution
+    #     """
+    #     import scipy as spy
+
+    #     self.data["labels_mean"], self.data["labels_std"] = {}, {}
+    #     for label in self.data_dictionary["train_labels"].columns:
+    #         if self.data_dictionary["train_labels"][label].dtype == object:
+    #             continue
+    #         f = spy.stats.norm.fit(self.data_dictionary["train_labels"][label])
+    #         self.data["labels_mean"][label], self.data["labels_std"][label] = f[0], f[1]
+
+    #     # in case targets are classifications
+    #     for label in self.unique_class_list:
+    #         self.data["labels_mean"][label], self.data["labels_std"][label] = 0, 0
+
+    #     return
+
+    # def remove_features_from_df(self, dataframe: DataFrame) -> DataFrame:
+    #     """
+    #     Remove the features from the dataframe before returning it to strategy. This keeps it
+    #     compact for Frequi purposes.
+    #     """
+    #     to_keep = [
+    #         col
+    #         for col in dataframe.columns
+    #         if not col.startswith("%") or col.startswith("%%")
+    #     ]
+    #     return dataframe[to_keep]
+
+    # def get_unique_classes_from_labels(self, dataframe: DataFrame) -> None:
+    #     # self.find_features(dataframe)
+    #     self.find_labels(dataframe)
+
+    #     for key in self.label_list:
+    #         if dataframe[key].dtype == object:
+    #             self.unique_classes[key] = dataframe[key].dropna().unique()
+
+    #     if self.unique_classes:
+    #         for label in self.unique_classes:
+    #             self.unique_class_list += list(self.unique_classes[label])
+
+    # def save_backtesting_prediction(self, append_df: DataFrame) -> None:
+    #     """
+    #     Save prediction dataframe from backtesting to feather file format
+    #     :param append_df: dataframe for backtesting period
+    #     """
+    #     full_predictions_folder = Path(
+    #         self.full_path / self.backtest_predictions_folder
+    #     )
+    #     if not full_predictions_folder.is_dir():
+    #         full_predictions_folder.mkdir(parents=True, exist_ok=True)
+
+    #     append_df.to_feather(self.backtesting_results_path)
+
+    # def get_backtesting_prediction(self) -> DataFrame:
+    #     """
+    #     Get prediction dataframe from feather file format
+    #     """
+    #     append_df = pd.read_feather(self.backtesting_results_path)
+    #     return append_df
+
+    # def check_if_backtest_prediction_is_valid(self, len_backtest_df: int) -> bool:
+    #     """
+    #     Check if a backtesting prediction already exists and if the predictions
+    #     to append have the same size as the backtesting dataframe slice
+    #     :param length_backtesting_dataframe: Length of backtesting dataframe slice
+    #     :return:
+    #     :boolean: whether the prediction file is valid.
+    #     """
+    #     path_to_predictionfile = Path(
+    #         self.full_path
+    #         / self.backtest_predictions_folder
+    #         / f"{self.model_filename}_prediction.feather"
+    #     )
+    #     self.backtesting_results_path = path_to_predictionfile
+
+    #     file_exists = path_to_predictionfile.is_file()
+
+    #     if file_exists:
+    #         append_df = self.get_backtesting_prediction()
+    #         if len(append_df) == len_backtest_df and "date" in append_df:
+    #             logger.info(
+    #                 f"Found backtesting prediction file at {path_to_predictionfile}"
+    #             )
+    #             return True
+    #         else:
+    #             logger.info(
+    #                 "A new backtesting prediction file is required. "
+    #                 "(Number of predictions is different from dataframe length or "
+    #                 "old prediction file version)."
+    #             )
+    #             return False
+    #     else:
+    #         logger.info(
+    #             f"Could not find backtesting prediction file at {path_to_predictionfile}"
+    #         )
+    #         return False
+
+    # def get_full_models_path(self, config: Config) -> Path:
+    #     """
+    #     Returns default FreqAI model path
+    #     :param config: Configuration dictionary
+    #     """
+    #     freqai_config: dict[str, Any] = config["freqai"]
+    #     return Path(
+    #         config["user_data_dir"] / "models" / str(freqai_config.get("identifier"))
+    #     )
+
+    # def remove_special_chars_from_feature_names(
+    #     self, dataframe: pd.DataFrame
+    # ) -> pd.DataFrame:
+    #     """
+    #     Remove all special characters from feature strings (:)
+    #     :param dataframe: the dataframe that just finished indicator population. (unfiltered)
+    #     :return: dataframe with cleaned feature names
+    #     """
+
+    #     spec_chars = [":"]
+    #     for c in spec_chars:
+    #         dataframe.columns = dataframe.columns.str.replace(c, "")
+
+    #     return dataframe
+
+    # def buffer_timerange(self, timerange: TimeRange):
+    #     """
+    #     Buffer the start and end of the timerange. This is used *after* the indicators
+    #     are populated.
+
+    #     The main example use is when predicting maxima and minima, the argrelextrema
+    #     function  cannot know the maxima/minima at the edges of the timerange. To improve
+    #     model accuracy, it is best to compute argrelextrema on the full timerange
+    #     and then use this function to cut off the edges (buffer) by the kernel.
+
+    #     In another case, if the targets are set to a shifted price movement, this
+    #     buffer is unnecessary because the shifted candles at the end of the timerange
+    #     will be NaN and FreqAI will automatically cut those off of the training
+    #     dataset.
+    #     """
+    #     buffer = self.freqai_config["feature_parameters"]["buffer_train_data_candles"]
+    #     if buffer:
+    #         timerange.stopts -= buffer * timeframe_to_seconds(self.config["timeframe"])
+    #         timerange.startts += buffer * timeframe_to_seconds(self.config["timeframe"])
+
+    #     return timerange
