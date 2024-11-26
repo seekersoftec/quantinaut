@@ -47,8 +47,9 @@ class NautilusAIDataKitchen(Data):
         self,
         instrument: Instrument,
         config: INautilusAIModelConfig,
-        ts_init: int,
         live: bool = False,
+        ts_event: int = 0,
+        ts_init: int = 0,
     ):
         """
         Initializes the NautilusAIDataKitchen instance.
@@ -64,7 +65,6 @@ class NautilusAIDataKitchen(Data):
         live : bool, optional
             Indicates if the kitchen is being used for live data analysis (default is False).
         """
-        super().__init__(ts_init=ts_init, ts_event=ts_init)
 
         self.config = config
         self.instrument = instrument
@@ -123,6 +123,33 @@ class NautilusAIDataKitchen(Data):
         # Extra configuration
         self.data["extra_returns_per_train"] = config.extra_returns_per_train
         self.set_all_instruments()
+
+        self._ts_event = ts_event
+        self._ts_init = ts_init
+
+    @property
+    def ts_event(self) -> int:
+        """
+        UNIX timestamp (nanoseconds) when the data event occurred.
+
+        Returns
+        -------
+        int
+
+        """
+        return self._ts_event
+
+    @property
+    def ts_init(self) -> int:
+        """
+        UNIX timestamp (nanoseconds) when the object was initialized.
+
+        Returns
+        -------
+        int
+
+        """
+        return self._ts_init
 
     def set_paths(
         self,

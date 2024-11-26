@@ -66,7 +66,13 @@ class NautilusAIDataDrawer(Data):
     It provides functionality to load/save these resources to/from disk.
     """
 
-    def __init__(self, full_path: Path, config: INautilusAIModelConfig, ts_init: int):
+    def __init__(
+        self,
+        full_path: Path,
+        config: INautilusAIModelConfig,
+        ts_event: int = 0,
+        ts_init: int = 0,
+    ):
         """
         Initializes the NautilusAIDataDrawer.
 
@@ -77,7 +83,6 @@ class NautilusAIDataDrawer(Data):
 
         TODO: Find a better type instead of Instrument.
         """
-        super().__init__(ts_init=ts_init, ts_event=ts_init)
 
         self.full_path = full_path
         self.config = config
@@ -122,6 +127,33 @@ class NautilusAIDataDrawer(Data):
             "extras": {},
         }
         self.model_type = self.nautilus_ai_info.model_save_type
+
+        self._ts_event = ts_event
+        self._ts_init = ts_init
+
+    @property
+    def ts_event(self) -> int:
+        """
+        UNIX timestamp (nanoseconds) when the data event occurred.
+
+        Returns
+        -------
+        int
+
+        """
+        return self._ts_event
+
+    @property
+    def ts_init(self) -> int:
+        """
+        UNIX timestamp (nanoseconds) when the object was initialized.
+
+        Returns
+        -------
+        int
+
+        """
+        return self._ts_init
 
     def update_metric_tracker(
         self, metric: str, value: float, instrument: Instrument

@@ -1,5 +1,6 @@
 from typing import Dict, List
 from decimal import Decimal
+import uuid
 from nautilus_trader.config import ActorConfig
 from nautilus_trader.core.data import Data
 from nautilus_trader.model.instruments import Instrument
@@ -283,7 +284,7 @@ class FeatureParameters(Data):
         ts_init: int = 0,
     ):
         self.include_timeframes: List[str] = include_timeframes
-        self.include_corr_instrumentlist: List[str] = include_corr_instrumentlist
+        self.include_corr_instrument_list: List[str] = include_corr_instrumentlist
         self.label_period_candles: int = label_period_candles
         self.include_shifted_candles: int = include_shifted_candles
         self.weight_factor: float = weight_factor
@@ -412,14 +413,14 @@ class INautilusAIModelConfig(ActorConfig):
     """
 
     # Nautilus params
-    instrument_ids_str: List[str] | None = None
-    bar_spec: str | None = None
+    instrument_ids_str: List[str] = []
+    bar_spec: str = "250-TICK-LAST-INTERNAL"
     trade_size: Decimal = Decimal("0.10")
 
     # General configuration parameters
     train_period_days: int = 0
     backtest_period_days: int = 7
-    identifier: str = "no_id_provided"
+    identifier: str = "unique-id"  # str(uuid.uuid4())
     live_retrain_hours: int = 0
     expiration_hours: int = 0
     purge_old_models: int = 2

@@ -142,18 +142,9 @@ def record_params(config: dict[str, Any], full_path: Path) -> None:
     """
     params_record_path = full_path / "run_params.json"
 
-    run_params = {
-        "freqai": config.get("freqai", {}),
-        "timeframe": config.get("timeframe"),
-        "stake_amount": config.get("stake_amount"),
-        "stake_currency": config.get("stake_currency"),
-        "max_open_trades": config.get("max_open_trades"),
-        "pairs": config.get("exchange", {}).get("pair_whitelist"),
-    }
-
     with params_record_path.open("w") as handle:
         rapidjson.dump(
-            run_params,
+            config,
             handle,
             indent=4,
             default=str,

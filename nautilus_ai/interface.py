@@ -6,7 +6,7 @@ from pathlib import Path
 from collections import deque
 import numpy as np
 import pandas as pd
-from typing import Any, Dict, Optional, Literal, Tuple
+from typing import Any, Deque, Dict, List, Optional, Literal, Tuple
 
 
 import datasieve.transforms as ds
@@ -20,8 +20,7 @@ from pandas import DataFrame
 from sklearn.preprocessing import MinMaxScaler
 
 from nautilus_trader.common.actor import Actor
-from nautilus_trader.model.data import DataType
-from nautilus_trader.model.data import Bar, BarSpecification
+from nautilus_trader.model.data import Bar, BarSpecification, BarType, DataType
 
 # from nautilus_trader.model.data.bar import Bar, BarSpecification
 from nautilus_trader.model.identifiers import InstrumentId
@@ -125,9 +124,7 @@ class INautilusAIModel(Actor, ABC):
         self.retrain = False
         self.first = True
 
-        self.bar_spec = None
-        if self.config_info.bar_spec is not None:
-            self.bar_spec = BarSpecification.from_str(self.config_info.bar_spec)
+        self.bar_spec: str = self.config_info.bar_spec
 
         # Path setup
         self.set_full_path()
@@ -146,8 +143,14 @@ class INautilusAIModel(Actor, ABC):
 
         # Feature and parameter initialization
         self.scanning = False
-        self.ft_params: FeatureParameters = self.config_info.feature_parameters
-        self.corr_pairlist: list[str] = self.ft_params.include_corr_pairlist
+
+        self.ft_params: FeatureParameters = FeatureParameters()
+        if self.config_info.feature_parameters is not None:
+            self.ft_params: FeatureParameters = self.config_info.feature_parameters
+
+        self.corr_instrument_list: List[str] = (
+            self.ft_params.include_corr_instrument_list
+        )
 
         self.keras: bool = self.config_info.keras
         if self.keras and self.ft_params.DI_threshold:
@@ -157,18 +160,17 @@ class INautilusAIModel(Actor, ABC):
             )
 
         self.CONV_WIDTH = max(1, self.config_info.conv_width)
-        self.class_names: list[str] = []  # For classification subclasses
+        self.class_names: List[str] = []  # For classification subclasses
         self.pair_it = 0
         self.pair_it_train = 0
-        self.total_pairs = len(
-            self.config.get("exchange", {}).get("pair_whitelist", [])
-        )
+        self.total_instruments = len(self.config_info.instrument_ids_str)
+
         self.train_queue = self._set_train_queue()
         self.inference_time: float = 0
         self.train_time: float = 0
         self.begin_time: float = 0
         self.begin_time_train: float = 0
-        self.base_tf_seconds = timeframe_to_seconds(self.config.timeframe)
+        # self.base_tf_seconds = timeframe_to_seconds(self.config.timeframe)
         self.continual_learning = self.config_info.continual_learning
         self.plot_features = max(0, self.ft_params.plot_feature_importances)
         self.corr_dataframes: dict[str, DataFrame] = {}
@@ -180,7 +182,7 @@ class INautilusAIModel(Actor, ABC):
         self.metadata: dict[str, Any] = (
             self.data_drawer.load_global_metadata_from_disk()
         )
-        self.data_provider: Optional[DataProvider] = None
+        # self.data_provider: Optional[DataProvider] = None
         self.max_system_threads = max(int(psutil.cpu_count() * 2 - 2), 1)
         self.can_short = True  # Updated in `start()` with strategy.can_short
 
@@ -217,16 +219,17 @@ class INautilusAIModel(Actor, ABC):
 
         """
 
-        instrument_ids_str = (["ETHUSDT.BINANCE"],)
+        # instrument_ids_str = (["ETHUSDT.BINANCE"],)
         # bar_type_str=BarType.from_str("ETHUSDT.BINANCE-250-TICK-LAST-INTERNAL"),
 
         if self.config_info.instrument_ids_str is not None:
-            for instrument_id in self.config_info.instrument_ids:
+            for instrument_id_str in self.config_info.instrument_ids:
+                instrument_id: InstrumentId = (
+                    InstrumentId.from_str(instrument_id_str),
+                )
                 self.instrument = self.cache.instrument(instrument_id)
                 if self.instrument is None:
-                    self.log.error(
-                        f"Could not find instrument for {self.instrument_id}"
-                    )
+                    self.log.error(f"Could not find instrument for {instrument_id}")
                     self.stop()
                     return
 
@@ -234,15 +237,46 @@ class INautilusAIModel(Actor, ABC):
 
                 if self.bar_spec is not None:
                     self.subscribe_bars(
-                        make_bar_type(
-                            instrument_id=instrument_id, bar_spec=self.bar_spec
-                        )
+                        BarType.from_str(f"{instrument_id_str}-{self.bar_spec}")
                     )
 
-        # Register the indicators for updating
-        # self.register_indicator_for_bars(
-        #         self.config_info.bar_type, self.indicator_manager
-        #     )
+        self.dataframe: DataFrame = DataFrame()
+        self.metadata: dict = {}
+
+        self.live = strategy.dp.runmode in (RunMode.DRY_RUN, RunMode.LIVE)
+        self.data_drawer.set_instrument_dict_info(self.metadata)
+        self.data_provider = strategy.dp
+        self.can_short = strategy.can_short
+
+        if self.live:
+            self.inference_timer("start")
+            self.data_kitchen = FreqaiDataKitchen(
+                self.config, self.live, self.metadata["pair"]
+            )
+            dk = self.start_live(dataframe, metadata, strategy, self.dk)
+            dataframe = dk.remove_features_from_df(dk.return_dataframe)
+
+        # For backtesting, each pair enters and then gets trained for each window along the
+        # sliding window defined by "train_period_days" (training window) and "live_retrain_hours"
+        # (backtest window, i.e. window immediately following the training window).
+        # FreqAI slides the window and sequentially builds the backtesting results before returning
+        # the concatenated results for the full backtesting period back to the strategy.
+        else:
+            self.dk = FreqaiDataKitchen(self.config, self.live, metadata["pair"])
+            if not self.config.get("freqai_backtest_live_models", False):
+                self.log.info(f"Training {len(self.dk.training_timeranges)} timeranges")
+                dk = self.start_backtesting(dataframe, metadata, self.dk, strategy)
+                self.dataframe = dk.remove_features_from_df(dk.return_dataframe)
+            else:
+                self.log.info("Backtesting using historic predictions (live models)")
+                dk = self.start_backtesting_from_historic_predictions(
+                    dataframe, metadata, self.dk
+                )
+                self.dataframe = dk.return_dataframe
+
+        self.clean_up()
+        if self.live:
+            self.inference_timer("stop", metadata["pair"])
 
     def on_stop(self) -> None:
         """
@@ -287,13 +321,64 @@ class INautilusAIModel(Actor, ABC):
     # Methods used by internal Actor Methods
     #
 
+    def _set_train_queue(self) -> Deque[str]:
+        """
+        Sets the training queue based on existing training timestamps or the provided instrument list.
+
+        - If there are no instruments with prior training timestamps, the queue is initialized
+          with the instruments listed in `instrument_ids_str` from the configuration.
+        - If training timestamps exist, instruments are ordered by their most recent training timestamp,
+          with untrained instruments added at the front of the queue.
+
+        Returns:
+        --------
+        Deque[str]: A deque containing the instrument queue, ordered by training priority.
+        """
+        current_instrument_list: List[str] = self.config_info.instrument_ids_str
+
+        # Check if the instrument dictionary is empty
+        if not self.data_drawer.instrument_dict:
+            self.log.info(
+                f"Set fresh train queue from instrument list. Queue: {current_instrument_list}"
+            )
+            return deque(current_instrument_list)
+
+        # Initialize the deque for the best training queue
+        best_queue: Deque[str] = deque()
+
+        # Sort instruments by training timestamp
+        instrument_dict_sorted = sorted(
+            self.data_drawer.instrument_dict.items(),
+            key=lambda item: item[1]["trained_timestamp"],
+        )
+
+        # Add instruments with existing training timestamps to the queue
+        for instrument, _ in instrument_dict_sorted:
+            if instrument in current_instrument_list:
+                best_queue.append(instrument)
+
+        # Add instruments without training timestamps to the front of the queue
+        for instrument in current_instrument_list:
+            if instrument not in best_queue:
+                best_queue.appendleft(instrument)
+
+        self.log.info(
+            f"Set existing queue from trained timestamps. Best approximation queue: {list(best_queue)}"
+        )
+        return best_queue
+
+    
     def set_full_path(self) -> None:
         """
-        Creates and sets the full path for the identifier
+        Creates and sets the full path for the identifier.
         """
-        self.full_path = Path(
-            self.config_info.user_data_dir / "models" / f"{self.identifier}"
-        )
+        # Ensure self.config_info.user_data_dir is treated as a Path
+        user_data_path = Path(self.config_info.user_data_dir)
+
+        # Construct the full path
+        self.full_path = user_data_path / "models" / f"{self.identifier}"
+
+        # Create the directory if it doesn't exist
         self.full_path.mkdir(parents=True, exist_ok=True)
 
     def clean_up(self) -> None:
