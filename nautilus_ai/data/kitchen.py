@@ -45,19 +45,17 @@ class NautilusAIDataKitchen(Data):
 
     def __init__(
         self,
-        instrument: Instrument,
         config: INautilusAIModelConfig,
         live: bool = False,
         ts_event: int = 0,
         ts_init: int = 0,
+        **kwargs,
     ):
         """
         Initializes the NautilusAIDataKitchen instance.
 
         Parameters:
         -----------
-        instrument : Instrument
-            The financial instrument to be analyzed.
         config : INautilusAIModelConfig
             Configuration object containing Nautilus AI model settings.
         ts_init : int
@@ -67,8 +65,6 @@ class NautilusAIDataKitchen(Data):
         """
 
         self.config = config
-        self.instrument = instrument
-        self.ts_init = ts_init
         self.live = live
 
         # Data storage and processing
@@ -94,7 +90,7 @@ class NautilusAIDataKitchen(Data):
         self.backtesting_results_path = Path()
         self.backtest_predictions_folder: str = "backtesting_predictions"
         self.keras = config.keras
-        self.backtest_live_models = config.get("freqai_backtest_live_models", False)
+        self.backtest_live_models = config.backtest_live_models
         self.backtest_live_models_data: dict[str, Any] = {}
 
         # Thread management
@@ -122,7 +118,7 @@ class NautilusAIDataKitchen(Data):
 
         # Extra configuration
         self.data["extra_returns_per_train"] = config.extra_returns_per_train
-        self.set_all_instruments()
+        # self.set_all_instruments()
 
         self._ts_event = ts_event
         self._ts_init = ts_init

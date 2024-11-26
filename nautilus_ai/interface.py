@@ -20,6 +20,7 @@ from pandas import DataFrame
 from sklearn.preprocessing import MinMaxScaler
 
 from nautilus_trader.common.actor import Actor
+from nautilus_trader.common import Environment
 from nautilus_trader.model.data import Bar, BarSpecification, BarType, DataType
 
 # from nautilus_trader.model.data.bar import Bar, BarSpecification
@@ -126,6 +127,9 @@ class INautilusAIModel(Actor, ABC):
 
         self.bar_spec: str = self.config_info.bar_spec
 
+        self.environment = Environment(self.config_info.environment)
+        self.log.debug(f"Using Environment: {self.environment}")
+
         # Path setup
         self.set_full_path()
 
@@ -184,7 +188,7 @@ class INautilusAIModel(Actor, ABC):
         )
         # self.data_provider: Optional[DataProvider] = None
         self.max_system_threads = max(int(psutil.cpu_count() * 2 - 2), 1)
-        self.can_short = True  # Updated in `start()` with strategy.can_short
+        # self.can_short = True  # Updated in `start()` with strategy.can_short
 
         # Model and PCA checks
         self.model: Any = None
@@ -206,27 +210,16 @@ class INautilusAIModel(Actor, ABC):
 
     def on_start(self) -> None:
         """
-        Actions to be performed on strategy start.
+        Actions to be performed on model start.
 
-        Entry point to the FreqaiModel from a specific pair, it will train a new model if
+        Entry point to the NautilusAIModel from a specific instrument, it will train a new model if
         necessary before making the prediction.
-
-        :param dataframe: Full dataframe coming from strategy - it contains entire
-                           backtesting timerange + additional historical data necessary to train
-        the model.
-        :param metadata: pair metadata coming from strategy.
-        :param strategy: Strategy to train on
 
         """
 
-        # instrument_ids_str = (["ETHUSDT.BINANCE"],)
-        # bar_type_str=BarType.from_str("ETHUSDT.BINANCE-250-TICK-LAST-INTERNAL"),
-
         if self.config_info.instrument_ids_str is not None:
-            for instrument_id_str in self.config_info.instrument_ids:
-                instrument_id: InstrumentId = (
-                    InstrumentId.from_str(instrument_id_str),
-                )
+            for instrument_id_str in self.config_info.instrument_ids_str:
+                instrument_id: InstrumentId = InstrumentId.from_str(instrument_id_str)
                 self.instrument = self.cache.instrument(instrument_id)
                 if self.instrument is None:
                     self.log.error(f"Could not find instrument for {instrument_id}")
@@ -241,20 +234,26 @@ class INautilusAIModel(Actor, ABC):
                     )
 
         self.dataframe: DataFrame = DataFrame()
-        self.metadata: dict = {}
+        self.metadata: dict = {
+            "instrument": self.config_info.instrument_ids_str[0]
+        }  # TODO: pass the proper values
 
-        self.live = strategy.dp.runmode in (RunMode.DRY_RUN, RunMode.LIVE)
+        self.live = self.environment in (Environment.SANDBOX, Environment.LIVE)
         self.data_drawer.set_instrument_dict_info(self.metadata)
-        self.data_provider = strategy.dp
-        self.can_short = strategy.can_short
+        # self.data_provider = strategy.dp
+        # self.can_short = strategy.can_short
 
         if self.live:
             self.inference_timer("start")
-            self.data_kitchen = FreqaiDataKitchen(
-                self.config, self.live, self.metadata["pair"]
+            self.data_kitchen = NautilusAIDataKitchen(
+                self.config_info, self.live, self.metadata["instrument"]
             )
-            dk = self.start_live(dataframe, metadata, strategy, self.dk)
-            dataframe = dk.remove_features_from_df(dk.return_dataframe)
+            data_kitchen = self.start_live(
+                dataframe, self.metadata, strategy, self.data_kitchen
+            )
+            dataframe = data_kitchen.remove_features_from_df(
+                data_kitchen.return_dataframe
+            )
 
         # For backtesting, each pair enters and then gets trained for each window along the
         # sliding window defined by "train_period_days" (training window) and "live_retrain_hours"
@@ -262,21 +261,29 @@ class INautilusAIModel(Actor, ABC):
         # FreqAI slides the window and sequentially builds the backtesting results before returning
         # the concatenated results for the full backtesting period back to the strategy.
         else:
-            self.dk = FreqaiDataKitchen(self.config, self.live, metadata["pair"])
-            if not self.config.get("freqai_backtest_live_models", False):
-                self.log.info(f"Training {len(self.dk.training_timeranges)} timeranges")
-                dk = self.start_backtesting(dataframe, metadata, self.dk, strategy)
-                self.dataframe = dk.remove_features_from_df(dk.return_dataframe)
+            self.data_kitchen = NautilusAIDataKitchen(
+                self.config_info, self.live, self.metadata["instrument"]
+            )
+            if not self.config_info.backtest_live_models:
+                self.log.info(
+                    f"Training {len(self.data_kitchen.training_timeranges)} timeranges"
+                )
+                data_kitchen = self.start_backtesting(
+                    dataframe, metadata, self.data_kitchen, strategy
+                )
+                self.dataframe = data_kitchen.remove_features_from_df(
+                    data_kitchen.return_dataframe
+                )
             else:
                 self.log.info("Backtesting using historic predictions (live models)")
-                dk = self.start_backtesting_from_historic_predictions(
-                    dataframe, metadata, self.dk
+                data_kitchen = self.start_backtesting_from_historic_predictions(
+                    dataframe, metadata, self.data_kitchen
                 )
-                self.dataframe = dk.return_dataframe
+                self.dataframe = data_kitchen.return_dataframe
 
         self.clean_up()
         if self.live:
-            self.inference_timer("stop", metadata["pair"])
+            self.inference_timer("stop", self.metadata["instrument"])
 
     def on_stop(self) -> None:
         """
@@ -367,7 +374,6 @@ class INautilusAIModel(Actor, ABC):
         )
         return best_queue
 
-    
     def set_full_path(self) -> None:
         """
         Creates and sets the full path for the identifier.

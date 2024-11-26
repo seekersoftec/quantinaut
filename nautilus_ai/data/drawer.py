@@ -345,14 +345,27 @@ class NautilusAIDataDrawer(Data):
     def set_instrument_dict_info(self, metadata: dict) -> None:
         """
         Adds an instrument's metadata to `instrument_dict` if it does not already exist.
-
-        Args:
-            metadata (dict): The metadata containing the instrument's details.
         """
-        if metadata["instrument"] not in self.instrument_dict:
-            self.instrument_dict[metadata["instrument"]] = (
-                self.empty_instrument_dict.copy()
+        if "instrument" not in metadata:
+            logger.error("Missing 'instrument' key in metadata: %s", metadata)
+            raise KeyError("'instrument' key is missing in the provided metadata.")
+
+        instrument_key = metadata["instrument"]
+
+        # Log the type and value of instrument_key
+        logger.debug(
+            "Instrument key value: %s, Type: %s", instrument_key, type(instrument_key)
+        )
+
+        if not isinstance(instrument_key, (str, int, tuple)):
+            logger.error("Unhashable instrument_key: %s", instrument_key)
+            raise TypeError(
+                f"'instrument' key must be hashable (str, int, tuple). Got: {type(instrument_key)}"
             )
+
+        if instrument_key not in self.instrument_dict:
+            logger.info("Adding new instrument to instrument_dict: %s", instrument_key)
+            self.instrument_dict[instrument_key] = self.empty_instrument_dict.copy()
 
     def set_initial_return_values(
         self, instrument: Instrument, pred_df: DataFrame, dataframe: DataFrame

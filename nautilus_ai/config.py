@@ -2,6 +2,7 @@ from typing import Dict, List
 from decimal import Decimal
 import uuid
 from nautilus_trader.config import ActorConfig
+from nautilus_trader.common import Environment
 from nautilus_trader.core.data import Data
 from nautilus_trader.model.instruments import Instrument
 from nautilus_trader.model.identifiers import InstrumentId
@@ -413,6 +414,7 @@ class INautilusAIModelConfig(ActorConfig):
     """
 
     # Nautilus params
+    environment: Environment = Environment.BACKTEST
     instrument_ids_str: List[str] = []
     bar_spec: str = "250-TICK-LAST-INTERNAL"
     trade_size: Decimal = Decimal("0.10")
@@ -431,6 +433,8 @@ class INautilusAIModelConfig(ActorConfig):
     data_kitchen_thread_count: int = 0
     activate_tensorboard: bool = True
     wait_for_training_iteration_on_reload: bool = True
+
+    backtest_live_models: bool = False
 
     # time_handler = TimeHandler(config={"timerange": "20220101-20231231"})
     # training_list, backtesting_list = time_handler.split_timerange("20220101-20231231", train_split=30, bt_split=7)
