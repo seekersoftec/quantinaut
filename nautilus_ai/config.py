@@ -420,7 +420,7 @@ class INautilusAIModelConfig(ActorConfig):
     trade_size: Decimal = Decimal("0.10")
 
     # General configuration parameters
-    train_period_days: int = 0
+    train_period_days: int = 15
     backtest_period_days: int = 7
     identifier: str = "unique-id"  # str(uuid.uuid4())
     live_retrain_hours: int = 0
@@ -439,7 +439,7 @@ class INautilusAIModelConfig(ActorConfig):
     # time_handler = TimeHandler(config={"timerange": "20220101-20231231"})
     # training_list, backtesting_list = time_handler.split_timerange("20220101-20231231", train_split=30, bt_split=7)
     # data_dict = time_handler.build_data_dictionary(train_df, test_df, train_labels, test_labels, train_weights, test_weights)
-    timerange: str = ""  # "20220101-20231231"
+    timerange: str = "20200814-20231231"
 
     # We notice that users like to use exotic indicators where
     # they do not know the required timeperiod. Here we include a factor

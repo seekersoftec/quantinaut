@@ -240,6 +240,7 @@ class INautilusAIModel(Actor, ABC):
 
         self.live = self.environment in (Environment.SANDBOX, Environment.LIVE)
         self.data_drawer.set_instrument_dict_info(self.metadata)
+        
         # self.data_provider = strategy.dp
         # self.can_short = strategy.can_short
 
@@ -258,7 +259,7 @@ class INautilusAIModel(Actor, ABC):
         # For backtesting, each pair enters and then gets trained for each window along the
         # sliding window defined by "train_period_days" (training window) and "live_retrain_hours"
         # (backtest window, i.e. window immediately following the training window).
-        # FreqAI slides the window and sequentially builds the backtesting results before returning
+        # NautilusAI slides the window and sequentially builds the backtesting results before returning
         # the concatenated results for the full backtesting period back to the strategy.
         else:
             self.data_kitchen = NautilusAIDataKitchen(

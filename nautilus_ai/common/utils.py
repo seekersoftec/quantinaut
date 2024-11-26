@@ -136,10 +136,14 @@ def timeframe_to_seconds(timeframe: str) -> int:
     return ccxt.Exchange.parse_timeframe(timeframe)
 
 
-def record_params(config: dict[str, Any], full_path: Path) -> None:
+def record_params(config: Dict[str, Any], full_path: Path) -> None:
     """
     Records run params in the full path for reproducibility
     """
+
+    if "environment" in config:
+        config["environment"] = str(config["environment"]).split(".")[-1]
+
     params_record_path = full_path / "run_params.json"
 
     with params_record_path.open("w") as handle:

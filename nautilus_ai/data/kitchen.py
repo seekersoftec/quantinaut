@@ -104,7 +104,7 @@ class NautilusAIDataKitchen(Data):
 
             if not self.backtest_live_models:
                 self.full_timerange = self.create_full_timerange(
-                    self.config["timerange"],
+                    self.config.timerange,
                     self.config.train_period_days,
                 )
                 (
@@ -679,7 +679,7 @@ class NautilusAIDataKitchen(Data):
         FileNotFoundError
             If the configuration file does not exist.
         """
-        config_path = Path(self.config["config_files"][0])
+        config_path = Path(self.config.user_data_dir)
 
         if not self.full_path.is_dir():
             self.full_path.mkdir(parents=True, exist_ok=True)
@@ -1218,15 +1218,31 @@ class NautilusAIDataKitchen(Data):
     #         )
     #         return False
 
-    # def get_full_models_path(self, config: Config) -> Path:
-    #     """
-    #     Returns default FreqAI model path
-    #     :param config: Configuration dictionary
-    #     """
-    #     freqai_config: dict[str, Any] = config["freqai"]
-    #     return Path(
-    #         config["user_data_dir"] / "models" / str(freqai_config.get("identifier"))
-    #     )
+    def get_full_models_path(self, config: INautilusAIModelConfig) -> Path:
+        """
+        Constructs and returns the default path for NautilusAI models.
+
+        Parameters
+        ----------
+        config : INautilusAIModelConfig
+            Configuration object containing user data directory and model identifier.
+
+        Returns
+        -------
+        Path
+            The full path to the directory where the model will be stored.
+
+        Raises
+        ------
+        ValueError
+            If `user_data_dir` or `identifier` is missing in the configuration.
+        """
+        if not config.user_data_dir:
+            raise ValueError("The 'user_data_dir' is missing in the configuration.")
+        if not config.identifier:
+            raise ValueError("The 'identifier' is missing in the configuration.")
+
+        return Path(config.user_data_dir) / "models" / str(config.identifier)
 
     # def remove_special_chars_from_feature_names(
     #     self, dataframe: pd.DataFrame
