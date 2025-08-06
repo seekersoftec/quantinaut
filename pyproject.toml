@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Automatically generating signals and trading based on machine learning and feature engineering."
 license = "MIT"
 readme = "README.md"
-keywords = ["quant", "quantitative", "investment", "trading", "algotrading"]
+keywords = ["quant", "quantitative", "investment", "trading", "algotrading", "ml"]
 requires-python = ">=3.12,<3.14"
 dependencies = [
     "nautilus-trader>=1.219.0",
@@ -13,6 +13,10 @@ dependencies = [
     "python-dotenv>=1.0.1",
     "toml>=0.10.2",
     "pyyaml>=6.0.2",
+    "scikit-learn>=1.7.1",
+    "lightgbm>=4.6.0",
+    "joblib>=1.5.1",
+    "river>=0.22.0",
 ]
 
 [tool.uv.sources]
