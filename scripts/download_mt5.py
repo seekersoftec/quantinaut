@@ -522,9 +522,9 @@ if __name__ == '__main__':
     ]
     scrape_and_save_candles(
         data_sources,
-        mt5_account_id="30565290",
-        mt5_password="@Ssc21707232",
-        mt5_server="Deriv-Demo",  
+        mt5_account_id="",
+        mt5_password="",
+        mt5_server="",  
         timeframe="15min",
         since="2011-01-01T00:00:00Z", 
         until="2024-01-01T23:59:59Z",
