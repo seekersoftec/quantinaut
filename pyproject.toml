@@ -1,0 +1,34 @@
+[project]
+name = "nautilus-ai"
+version = "0.1.0"
+description = "Automatically generating signals and trading based on machine learning and feature engineering."
+license = "MIT"
+readme = "README.md"
+keywords = ["quant", "quantitative", "investment", "trading", "algotrading"]
+requires-python = ">=3.12,<3.14"
+dependencies = [
+    "nautilus-trader>=1.219.0",
+    "pandas>=2.2.3",
+    "pyparsing>=3.2.1",
+    "python-dotenv>=1.0.1",
+    "toml>=0.10.2",
+    "pyyaml>=6.0.2",
+]
+
+[tool.uv.sources]
+smartmoneyconcepts = { git = "https://github.com/tradershubspace/smart-money-concepts.git" }
+
+# For now we use the poetry build backend until uv supports custom build scripts
+[build-system]
+requires = [
+    "setuptools>=76",
+    "poetry-core>=2.0.1",
+    "numpy>=1.26.4",
+    "nautilus-trader>=1.219.0",
+    "cython==3.1.0a1",
+]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.build]
+script = "build.py"
+generate-setup-file = false

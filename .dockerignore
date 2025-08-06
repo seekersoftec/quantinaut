@@ -1,0 +1,17 @@
+.vscode/
+.venv/
+.ipynb_checkpoints/*
+.idea/
+notebooks/
+archived/
+data/
+docs/
+htmlcov
+.coverage
+MANIFEST
+dist/
+*.pyc
+*.pyd
+build/*
+DATA/*
+

@@ -1,0 +1,94 @@
+.vscode/
+.venv/
+.ipynb_checkpoints/*
+.idea/
+htmlcov
+.coverage
+MANIFEST
+dist/
+*.pyc
+*.pyd
+build/*
+__pycache__/
+samples/
+*.out
+*_log.csv
+*_report-*.csv
+DATA/*
+dump/*
+price_caches/
+bot.html
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Python related
+*.pyc
+*.pyd
+.history*
+.cache/
+.mypy_cache/
+.profile/
+.pytest_cache/
+.ruff_cache/
+*dask-worker-space*
+venv*/
+
+# C extensions
+*.so
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+samples/
+
+# Config
+*kubeconfig.y*ml
+
+# Web
+node_modules
+.DS_Store
+dist
+dist-ssr
+*.local
+
+# Helm
+*env.y*ml
+
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfvars
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# Misc.
+**/tmp/*
+
+# Latex
+*.aux
+*.bbl
+*.blg
+*.dvi
+*.idx
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+
+# Logs
+*.log
+detected_patterns/
