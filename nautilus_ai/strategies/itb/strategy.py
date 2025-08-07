@@ -16,8 +16,10 @@ from nautilus_trader.config import StrategyConfig
 from nautilus_trader.model.data import Bar, BarType, DataType
 from nautilus_trader.model.instruments import Instrument
 from nautilus_trader.model.identifiers import InstrumentId, ClientId
-from nautilus_trader.trading.strategy import Strategy
 from nautilus_trader.model.enums import OrderSide, TimeInForce, TrailingOffsetType, OrderType, TriggerType
+
+from nautilus_trader.trading.strategy import Strategy
+from nautilus_trader.indicators.rvi import RelativeVolatilityIndex
 
 from nautilus_ai.common import save_logs, TradingDecision, TradeSignal, Volatility
 from nautilus_ai.notifications.channel import ChannelData
@@ -56,14 +58,37 @@ class ITB(Strategy):
         self._notification_channel_id = None
         self._trade_signal = TradingDecision.NEUTRAL
         self._volatility = Volatility.NEUTRAL
+        
+        self.instrument_id = self.config.bar_type.instrument_id
+
+        # Initialized in on_start
+        self.instrument: Instrument | None = None
+        self.tick_size = None
+        
+        self.rvi = RelativeVolatilityIndex(config.rvi_period)
 
     def on_start(self) -> None:
         """
         Handles strategy startup logic.
         """
+        self.instrument = self.cache.instrument(self.instrument_id)
+        if self.instrument is None:
+            self.log.error(f"Could not find instrument for {self.instrument_id}")
+            self.stop()
+            return
+
+        self.tick_size = self.instrument.price_increment
+
+        self.register_indicator_for_bars(self.config.bar_type, self.rvi)
+
+        # Get historical data
+        self.request_bars(self.config.bar_type)
+
+        # Subscribe to live data
+        self.subscribe_quote_ticks(self.instrument_id)
+        self.subscribe_bars(self.config.bar_type) 
         self.subscribe_data(data_type=DataType(ChannelData))
-        pass 
-    
+        
     def on_stop(self) -> None:
         """
         Actions to be performed when the strategy is stopped.
@@ -74,19 +99,32 @@ class ITB(Strategy):
         # Unsubscribe from data
         self.unsubscribe_quote_ticks(self.instrument_id)
         self.unsubscribe_bars(self.config.bar_type)
+        self.unsubscribe_data(data_type=DataType(ChannelData))
     
     def on_reset(self) -> None:
         """
-        
+        Actions to be performed when the strategy is reset.
         """
-        pass
+        self.rvi.reset()
     
     def on_bar(self, bar: Bar) -> None:
         """
-        
+        Actions to be performed when the strategy is running and receives a bar.
+        Parameters
+        ----------
+        bar : Bar
+            The bar received.
         """
-        pass
-    
+        if not self.indicators_initialized():
+            self.log.info(
+                f"Waiting for indicators to warm up [{self.cache.bar_count(self.config.bar_type)}]",
+                color=LogColor.BLUE,
+            )
+            return
+
+        if bar.is_single_price():
+            return
+        
     def on_data(self, data: Data) -> None:
         """
         Actions to perform when the channel stops.
@@ -101,6 +139,10 @@ class ITB(Strategy):
         
         """
         self._trade_signal = TradingDecision.ENTER_LONG if side == OrderSide.BUY else TradingDecision.ENTER_SHORT 
+        
+        # self._trade()
+        # self._send_notifications()
+        # self._save_logs()
         pass
     
     def _trade(self, bar: Bar, confidence: float = 0.50):
@@ -144,7 +186,7 @@ class ITB(Strategy):
             )
         self.log.info(f"Sent Trade Signal {data!r}", color=LogColor.CYAN)
             
-    def _send_notification(self, data: ChannelData):
+    def _send_notifications(self, data: ChannelData):
         """Sends notifications to the configured channel."""
         # Ensure the data has the correct ID before publishing
         PyCondition.is_true(

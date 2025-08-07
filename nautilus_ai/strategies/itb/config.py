@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 from nautilus_trader.core.data import Data
-from nautilus_trader.config import PositiveInt
+from nautilus_trader.config import PositiveInt, PositiveFloat
 from nautilus_trader.config import StrategyConfig
 from nautilus_trader.model.data import BarType
 from nautilus_trader.model.identifiers import ClientId
@@ -323,9 +323,12 @@ class ITBConfig(StrategyConfig, frozen=True):
     algorithms: List[AlgorithmConfig]
 
     # Signal Generation & Outputs
+    rvi_period: PositiveInt = 9
+    rvi_threshold: PositiveFloat = 50.0
     signal_sets: List[SignalSetConfig]
     output_sets: List[OutputSetConfig]
 
     # Advanced Models
     rolling_predict: RollingPredictConfig
+    
     

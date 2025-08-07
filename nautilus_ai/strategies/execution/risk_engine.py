@@ -19,8 +19,10 @@ from nautilus_trader.model.orders.base import Order
 from nautilus_trader.model.orders.list import OrderList
 from nautilus_trader.model.orders import MarketOrder, TrailingStopMarketOrder
 from nautilus_trader.trading.strategy import Strategy
+import pandas as pd
 
-from nautilus_ai.common import TradeSignal, TradingDecision
+from nautilus_ai.common import TradeSignal, TradingDecision, save_logs
+from nautilus_ai.notifications.channel import ChannelData
 from nautilus_ai.strategies.execution.risk_models import BaseRiskModel, RiskModelFactory
 
 
@@ -97,6 +99,8 @@ class AdaptiveRiskEngine(Strategy):
         self.max_trade_sizes.update(config.max_trade_sizes)
         self.risk_models: dict[InstrumentId, BaseRiskModel] = {}
         self.atr_values: dict[InstrumentId, float] = {}
+        
+        self._notification_channel_id = None
 
     def on_start(self) -> None:
         """
@@ -151,6 +155,9 @@ class AdaptiveRiskEngine(Strategy):
 
         if isinstance(data, TradeSignal):
             self._handle_trade_signal(data)
+            
+        if isinstance(data, ChannelData) and len(data.channel_id) != 0 and self._notification_channel_id is None:
+            self._notification_channel_id = data.channel_id
             
     def on_event(self, event: Event) -> None:
         """
@@ -545,158 +552,37 @@ class AdaptiveRiskEngine(Strategy):
 
         self.submit_order_list(ol)
 
-
-# def place_order(self, side: OrderSide, bar, capital: Decimal, strategy):
-#         """
-#         Place order using risk model logic.
-#         Supports simple or bracket orders with optional trailing logic.
-#         """
-#         size = self.get_size(capital=capital, side=side)
-#         instr_id = strategy.config.instrument_id
-
-#         price = bar.close.as_double()
-#         stop_price = self._calculate_stop_price(side, price, strategy)
-#         take_profit_price = self._calculate_tp_price(side, price, strategy)
-
-#         # Decide which type to place
-#         if strategy.counter_trend_mode:
-#             self.order_factory.bracket_multi_tp(
-#                 instrument_id=instr_id,
-#                 side=side,
-#                 entry_price=price,
-#                 stop_loss_price=stop_price,
-#                 take_profits=[take_profit_price],  # can be extended
-#                 size=size,
-#                 tag="COUNTER_TREND_ENTRY"
-#             )
-#         else:
-#             self.strategy.order_factory.simple_order(
-#                 instrument_id=instr_id,
-#                 side=side,
-#                 price=price,
-#                 size=size,
-#                 tag="TREND_ENTRY"
-#             )
-
-#     def _calculate_stop_price(self, side: OrderSide, entry: Decimal, strategy) -> Decimal:
-#         if self.trailing_mode == "ATR":
-#             atr = strategy.atr.value
-#             return entry - Decimal(str(atr)) if side.is_buy() else entry + Decimal(str(atr))
-#         elif self.trailing_mode == "SWING":
-#             swing_price = strategy.last_swing_low if side.is_buy() else strategy.last_swing_high
-#             return swing_price
-#         elif self.trailing_mode == "FIXED":
-#             offset = Decimal(str(self.trailing_offset or 0.005))
-#             return entry - offset if side.is_buy() else entry + offset
-#         else:
-#             raise ValueError("Unknown trailing_mode for stop-loss calculation")
-
-#     def _calculate_tp_price(self, side: OrderSide, entry: Decimal, strategy) -> Decimal:
-#         rr = Decimal("2")  # default 2R
-#         stop = self._calculate_stop_price(side, entry, strategy)
-#         distance = abs(entry - stop)
-#         return entry + rr * distance if side.is_buy() else entry - rr * distance
+    def _send_notifications(self, data: ChannelData):
+        """Sends notifications to the configured channel."""
+        # Ensure the data has the correct ID before publishing
+        PyCondition.is_true(
+            data.channel_id == self._notification_channel_id,
+            "Cannot send data from a channel instance that doesn't match the data's ID."
+        )
+        self.publish_data(
+            data_type=DataType(ChannelData, metadata={"channel_id": self._notification_channel_id}),
+            data=data
+        )
+        self.log.info(f"Sent Notification to {self._notification_channel_id}", color=LogColor.CYAN)
     
-    
-#     def place_risk_based_order(self, side, bar, is_counter_trend=False):
-#         instr_id = self.config.instrument_id
-#         entry_price = bar.close.as_double()
+    def _save_logs(self, bar: Bar, **kwargs) -> None:
+        """
+        Save logs for analysis.
 
-#         # Determine size using the risk model
-#         size = self.risk_model.get_size(
-#             instrument_id=instr_id,
-#             side=side,
-#             entry_price=entry_price,
-#             stop_price=self.estimate_stop_loss_price(side, bar),
-#             account_state=self.portfolio.account_state,
-#         )
+        Parameters
+        ----------
+        bar : Bar
+            The current market bar.
+        """
+        # Ensure all arrays in the data dictionary have the same length
+        data = {
+            "timestamp": [pd.Timestamp(bar.ts_init, tz="UTC")],
+            "instrument_id": [f"{bar.bar_type.instrument_id}"],
+            "high": [float(bar.high)],
+            "low": [float(bar.low)],
+            "close": [float(bar.close)],
+            **{key: [value] for key, value in kwargs.items()},
+        }
 
-#         # Place bracket or market orders with multiple TP levels
-#         if is_counter_trend or self.config.force_bracket_orders:
-#             self.place_bracket_multi_tp(
-#                 side=side,
-#                 entry_price=entry_price,
-#                 stop_price=self.estimate_stop_loss_price(side, bar),
-#                 tp_levels=self.tp_levels,
-#                 size=size,
-#             )
-#         else:
-#             self.place_market_order(side=side, size=size)
-
-#     def estimate_stop_loss_price(self, side, bar):
-#         atr = self.atr.value
-#         return bar.close.as_double() - atr if side == OrderSide.BUY else bar.close.as_double() + atr
-    
-#     def place_bracket_multi_tp(self, side, entry_price, stop_price, tp_levels, size):
-#         """
-#         Parameters:
-#         - side: OrderSide.BUY or OrderSide.SELL
-#         - entry_price: float
-#         - stop_price: float
-#         - tp_levels: list of tuples (size_frac, rr_multiplier)
-#         - size: float
-#         """
-#         instr_id = self.strategy.config.instrument_id
-#         stop_side = OrderSide.SELL if side == OrderSide.BUY else OrderSide.BUY
-#         tp_side = stop_side
-
-#         # Cancel existing orders before placing new bracket
-#         self.strategy.cancel_all_orders(instr_id)
-
-#         # Parent market order
-#         order_id = self.place_market_order(side=side, size=size)
-
-#         # Attach stop-loss
-#         self.place_stop_loss(
-#             parent_id=order_id,
-#             side=stop_side,
-#             stop_price=stop_price,
-#             size=size,
-#         )
-
-#         # Attach multiple take-profits
-#         for i, (size_frac, rr) in enumerate(tp_levels):
-#             tp_price = (
-#                 entry_price + rr * (entry_price - stop_price)
-#                 if side == OrderSide.BUY
-#                 else entry_price - rr * (stop_price - entry_price)
-#             )
-#             tp_size = size * size_frac
-
-#             self.place_take_profit(
-#                 parent_id=order_id,
-#                 side=tp_side,
-#                 limit_price=tp_price,
-#                 size=tp_size,
-#                 tag=f"TP{i+1}_{rr:.1f}R"
-#             )
-
-#     def place_market_order(self, side, size):
-#         # Example - replace with real implementation
-#         return self.order_factory.market(
-#             instrument_id=self.config.instrument_id,
-#             side=side,
-#             quantity=size,
-#             tag="ENTRY_MARKET"
-#         )
-
-#     def place_stop_loss(self, parent_id, side, stop_price, size):
-#         self.order_factory.stop_loss(
-#             parent_id=parent_id,
-#             instrument_id=self.config.instrument_id,
-#             side=side,
-#             stop_price=stop_price,
-#             quantity=size,
-#             tag="STOP"
-#         )
-
-#     def place_take_profit(self, parent_id, side, limit_price, size, tag="TP"):
-#         self.order_factory.limit(
-#             parent_id=parent_id,
-#             instrument_id=self.config.instrument_id,
-#             side=side,
-#             limit_price=limit_price,
-#             quantity=size,
-#             tag=tag
-#         )
-
+        # Save logs
+        save_logs(data, "itb_logs.csv")
