@@ -1,6 +1,7 @@
 import configparser
 import os
 import numpy as np
+import pandas as pd
 import yaml
 import json
 import toml
@@ -102,3 +103,20 @@ def handle_config(path: Union[str, Path], mode="load", data=None):
     else:
         raise ValueError("Mode must be 'load' or 'save'")
 
+
+def save_metrics(data: dict, metrics_file: str = "metrics_log.csv"):
+    """
+    Save metrics to a CSV file for analysis using pandas.
+
+    Parameters
+    ----------
+    data : dict
+        A dictionary containing the metrics to save.
+    metrics_file : str
+        The file path where metrics will be saved. Defaults to "metrics_log.csv".
+    """
+    df = pd.DataFrame(data)
+    if not Path(metrics_file).exists():
+        df.to_csv(metrics_file, index=False)
+    else:
+        df.to_csv(metrics_file, mode="a", header=False, index=False)
