@@ -31,6 +31,27 @@ class TradingDecision(IntEnum):
         return self.name.lower()
 
 @unique
+class Volatility(Enum):
+    """
+    Volatility regimes.
+    
+    Attributes
+    ----------
+    NEUTRAL : int
+        No volatility
+    BULLISH : int
+        Bullish volatility
+    BEARISH : int
+        Bearish volatility
+    """
+    NEUTRAL  = auto()
+    BULLISH  = auto()
+    BEARISH  = auto()
+
+    def __str__(self) -> str:
+        return self.name.lower()
+    
+@unique
 class SecurityType(Enum):
     STOCKS = "stocks"
     OPTIONS = "options"
