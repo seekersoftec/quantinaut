@@ -24,7 +24,7 @@ from nautilus_trader.model.data import Bar, BarType
 from nautilus_trader.model.enums import OrderType
 from sklearn.base import ClassifierMixin, RegressorMixin
 
-from nautilus_ai.model.enums import TradingDecision, MLLearningType, MLTaskType
+from nautilus_ai.common.enums import TradingDecision, MLLearningType, MLTaskType
 
 class TimeframeSubscription(Data):
     """

@@ -113,11 +113,11 @@ class TelegramChannel(Channel):
         
     async def _start_command(self, message: Message):
         """Handles the /start command."""
-        await message.answer(f"Hello, {hbold(message.from_user.full_name)}! \nWelcome to NautilusTrader.")
+        await message.answer(f"Hello, {hbold(message.from_user.full_name)}! \nWelcome to Nautilus AI.")
     
     async def _stop_command(self, message: Message):
         """Handles the /start command."""
-        await message.answer(f"Shutting down NautilusTrader...")
+        await message.answer(f"Shutting down Nautilus AI...")
     
     async def _handle_incoming_message(self, message: Message):
         """
