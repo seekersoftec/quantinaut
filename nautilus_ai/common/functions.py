@@ -104,19 +104,19 @@ def handle_config(path: Union[str, Path], mode="load", data=None):
         raise ValueError("Mode must be 'load' or 'save'")
 
 
-def save_metrics(data: dict, metrics_file: str = "metrics_log.csv"):
+def save_logs(data: dict, logs_file: str = "logs.csv"):
     """
-    Save metrics to a CSV file for analysis using pandas.
+    Save logs to a CSV file for analysis using pandas.
 
     Parameters
     ----------
     data : dict
-        A dictionary containing the metrics to save.
-    metrics_file : str
-        The file path where metrics will be saved. Defaults to "metrics_log.csv".
+        A dictionary containing the logs to save.
+    logs_file : str
+        The file path where logs will be saved. Defaults to "logs_log.csv".
     """
     df = pd.DataFrame(data)
-    if not Path(metrics_file).exists():
-        df.to_csv(metrics_file, index=False)
+    if not Path(logs_file).exists():
+        df.to_csv(logs_file, index=False)
     else:
-        df.to_csv(metrics_file, mode="a", header=False, index=False)
+        df.to_csv(logs_file, mode="a", header=False, index=False)
