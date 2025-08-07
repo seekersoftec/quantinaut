@@ -28,3 +28,40 @@
   year={2022}
 }
 ```
+
+
+
+## Related projects
+
+- https://github.com/CryptoSignal/Crypto-Signal Github.com/CryptoSignal - #1 Quant Trading & Technical Analysis Bot
+- https://github.com/tensortrade-org/tensortrade An open source reinforcement learning framework for training, evaluating, and deploying robust trading agents
+- https://github.com/Superalgos/Superalgos Free, open-source crypto trading bot, automated bitcoin / cryptocurrency trading software, algorithmic trading bots. Visually design your crypto trading bot, leveraging an integrated charting system, data-mining, backtesting, paper trading, and multi-server crypto bot deployments
+- https://github.com/kieran-mackle/AutoTrader A Python-based development platform for automated trading systems - from backtesting to optimisation to livetrading
+- https://github.com/areed1192/python-trading-robot A trading robot, that can submit basic orders in an automated fashion using the TD API
+- https://github.com/jmrichardson/tuneta Intelligently optimizes technical indicators and optionally selects the least intercorrelated for use in machine learning models
+- https://github.com/Erfaniaa/binance-futures-trading-bot Easy-to-use multi-strategic automatic trading for Binance Futures with Telegram integration
+- https://github.com/smileinnovation/cryptocurrency-trading How to make profits in cryptocurrency trading with machine learning
+
+Backtesting
+- https://github.com/nautechsystems/nautilus_trader
+- https://github.com/mementum/backtrader
+- https://github.com/kernc/backtesting.py
+
+External integrations
+- https://github.com/ccxt/ccxt A JavaScript / Python / PHP cryptocurrency trading API with support for more than 100 bitcoin/altcoin exchanges
+- https://github.com/aiogram/aiogram Is a pretty simple and fully asynchronous framework for Telegram Bot API
+- https://github.com/sammchardy/python-binance
+
+
+## TODOs: 
+- GUI: 
+  ```text
+    A comprehensive dashboard with the following tech stack: 
+    vector.dev + VictoriaMetrics + VictoriaLogs +  Grafana.  
+
+    - NT outputs logs to a file in logfmt format.
+
+    - Vector parses the log files and writes the data to both VictoriaMetrics and VictoriaLogs.
+
+    - Grafana is used for visualization and presentation.
+  ```

@@ -19,9 +19,9 @@ from nautilus_trader.trading.strategy import Strategy
 from nautilus_trader.model.enums import OrderSide, TimeInForce, TrailingOffsetType, OrderType, TriggerType
 from nautilus_trader.indicators.atr import AverageTrueRange
 
-from nautilus_ai.strategies.config import RiskModelConfig
+# from nautilus_ai.strategies.config import RiskModelConfig
 from nautilus_ai.strategies.execution.risk_models import RiskModelFactory
-from nautilus_ai.common.enums import MLFramework, MLModelType, MLLearningType, MLTaskType
+from nautilus_ai.common import MLFramework, MLModelType, MLLearningType, MLTaskType
 
 np.random.seed(100)
 
