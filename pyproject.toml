@@ -19,6 +19,12 @@ dependencies = [
     "river>=0.22.0",
 ]
 
+[dependency-groups]
+tests = [
+    "pytest>=8.3.2",
+    "pytest-asyncio>=1.0.0",
+]
+
 [tool.uv.sources]
 smartmoneyconcepts = { git = "https://github.com/tradershubspace/smart-money-concepts.git" }
 
