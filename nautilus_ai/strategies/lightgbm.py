@@ -9,8 +9,8 @@ from sklearn.preprocessing import StandardScaler
 from nautilus_trader.common.enums import LogColor
 from nautilus_trader.model.enums import OrderSide, TimeInForce, OrderType, TrailingOffsetType
 from nautilus_trader.model.identifiers import ClientId, InstrumentId
-from nautilus_ai.model import MLTaskType
-from nautilus_ai.strategies.strategy import MLStrategy, MLStrategyConfig
+from nautilus_ai.common.enums import MLTaskType
+from nautilus_ai.strategies.ml_strategy import MLStrategy, MLStrategyConfig
 
 
 class LightGBMStrategyConfig(MLStrategyConfig, frozen=True):
