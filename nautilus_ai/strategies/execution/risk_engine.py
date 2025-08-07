@@ -129,7 +129,7 @@ class AdaptiveRiskEngine(Strategy):
 
         This method:
         - Calls the base `on_reset` method.
-        - Resets the ATR indicator, VVR filter, and nodal displacement sequence.
+        - Resets the indicators, etc.
         - Logs that the engine has been reset.
 
         Useful during reinitialization or when restarting a backtest session.
