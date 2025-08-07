@@ -292,6 +292,9 @@ class ITBConfig(StrategyConfig, frozen=True):
     bar_type: BarType
     client_id: ClientId = ClientId("ITB-001")
     data_folder: Path = Path("./DATA_ITB")
+    model_path: Union[Path, str, None] = None
+    scale_data: bool = False
+    scaler_path: Union[Path, str, None] = None
 
     # The number of past bars used to compute features for the current bar.
     features_horizon: PositiveInt = 120

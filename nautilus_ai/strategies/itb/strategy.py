@@ -89,6 +89,10 @@ class ITB(Strategy):
         self.subscribe_bars(self.config.bar_type) 
         self.subscribe_data(data_type=DataType(ChannelData))
         
+        if self.config.model_path:
+            self.log.info("Loading pre-trained model.")
+            self._load_model()
+        
     def on_stop(self) -> None:
         """
         Actions to be performed when the strategy is stopped.
@@ -106,6 +110,27 @@ class ITB(Strategy):
         Actions to be performed when the strategy is reset.
         """
         self.rvi.reset()
+    
+    def on_load(self) -> None:
+        """
+        Loads the model and scaler when the strategy state is loaded.
+        """
+        self._load_model()
+    
+    def on_save(self) -> None:
+        """
+        Saves the model and scaler when the strategy state is saved.
+        """
+        self._save_model()
+    
+    def on_data(self, data: Data) -> None:
+        """
+        Actions to perform when the channel stops.
+        """
+        PyCondition.not_none(data, "data")
+        
+        if isinstance(data, ChannelData) and len(data.channel_id) != 0 and self._notification_channel_id is None:
+            self._notification_channel_id = data.channel_id
     
     def on_bar(self, bar: Bar) -> None:
         """
@@ -125,21 +150,15 @@ class ITB(Strategy):
         if bar.is_single_price():
             return
         
-    def on_data(self, data: Data) -> None:
-        """
-        Actions to perform when the channel stops.
-        """
-        PyCondition.not_none(data, "data")
+        self._decide(bar)
         
-        if isinstance(data, ChannelData) and len(data.channel_id) != 0 and self._notification_channel_id is None:
-            self._notification_channel_id = data.channel_id
-    
-    def _get_model_decision(self, bar: Bar):
+    def _decide(self, bar: Bar):
+        """
+        Model Decision
         """
         
-        """
-        self._trade_signal = TradingDecision.ENTER_LONG if side == OrderSide.BUY else TradingDecision.ENTER_SHORT 
-        
+        # self._trade_signal = TradingDecision.ENTER_LONG if side == OrderSide.BUY else TradingDecision.ENTER_SHORT 
+
         # self._trade()
         # self._send_notifications()
         # self._save_logs()
@@ -220,3 +239,97 @@ class ITB(Strategy):
 
         # Save logs
         save_logs(data, "itb_logs.csv")
+
+    def _load_model(self):
+        """
+        Loads a model and a scaler (if configured) from file.
+        """
+        # Load the model
+        if self.config.model_path:
+            path = Path(self.config.model_path)
+            if not path.exists():
+                self.log.warning(f"Model file not found: {self.config.model_path}. Skipping model load.")
+                return # Exit if model path is given but file doesn't exist
+
+            ext = str(path).lower()
+            if ext.endswith(".joblib"):
+                try:
+                    import joblib
+                    self.model = joblib.load(path)
+                except ImportError:
+                    self.log.error("joblib is not installed. Please install with `pip install joblib`.")
+            elif ext.endswith((".h5", ".keras")):
+                try:
+                    from keras.models import load_model
+                    self.model = load_model(path)
+                except ImportError:
+                    self.log.error("Keras is not installed. Please install with `pip install keras`.")
+            elif ext.endswith(".pkl"):
+                with open(path, "rb") as f:
+                    self.model = pickle.load(f)
+            else:
+                self.log.error(f"Unsupported model format: {ext}")
+
+            if self.model is not None:
+                self.log.info(f"Model loaded from {self.config.model_path}", color=LogColor.GREEN)
+
+        # Load the scaler if configured
+        if self.config.scale_data:
+            if not self.config.scaler_path:
+                self.log.warning("`scale_data` is True but `scaler_path` is not provided. Cannot load scaler.")
+                return
+
+            scaler_path = Path(self.config.scaler_path)
+            if not scaler_path.exists():
+                self.log.warning(f"Scaler file not found: {self.config.scaler_path}. Skipping scaler load.")
+                return
+            
+            try:
+                import joblib
+                self.scaler = joblib.load(scaler_path)
+                self.log.info(f"Scaler loaded from {self.config.scaler_path}", color=LogColor.GREEN)
+            except ImportError:
+                self.log.error("joblib is not installed. Please install with `pip install joblib`.")
+            except Exception as e:
+                self.log.error(f"Failed to load scaler from {scaler_path}: {e}")
+
+
+    def _save_model(self):
+        """
+        Saves the model and scaler (if it exists) to their respective paths.
+        """
+        # Save the model
+        if self.model and self.config.model_path:
+            path = Path(self.config.model_path)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            ext = str(path).lower()
+
+            try:
+                if ext.endswith(".joblib"):
+                    import joblib
+                    joblib.dump(self.model, path)
+                elif ext.endswith((".h5", ".keras")):
+                    self.model.save(path)
+                elif ext.endswith(".pkl"):
+                    with open(path, "wb") as f:
+                        pickle.dump(self.model, f)
+                else:
+                    self.log.error(f"Unsupported model format for saving: {ext}")
+                    return
+                self.log.info(f"Model saved to {self.config.model_path}", color=LogColor.GREEN)
+            except Exception as e:
+                self.log.error(f"Failed to save model to {path}: {e}")
+
+        # Save the scaler
+        if self.scaler and self.config.scaler_path:
+            scaler_path = Path(self.config.scaler_path)
+            scaler_path.parent.mkdir(parents=True, exist_ok=True)
+
+            try:
+                import joblib
+                joblib.dump(self.scaler, scaler_path)
+                self.log.info(f"Scaler saved to {self.config.scaler_path}", color=LogColor.GREEN)
+            except ImportError:
+                self.log.error("joblib is not installed. Please install with `pip install joblib`.")
+            except Exception as e:
+                self.log.error(f"Failed to save scaler to {scaler_path}: {e}")
