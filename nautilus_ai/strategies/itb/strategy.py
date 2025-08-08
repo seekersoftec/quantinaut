@@ -22,7 +22,7 @@ from nautilus_trader.trading.strategy import Strategy
 from nautilus_trader.indicators.rvi import RelativeVolatilityIndex
 
 from nautilus_ai.common import save_logs, TradingDecision, TradeSignal, Volatility
-from nautilus_ai.notifications.channel import ChannelData
+from nautilus_ai.channels import ChannelData
 from nautilus_ai.strategies.itb.config import AlgorithmConfig, ITBConfig, OutputSetConfig, RollingPredictConfig, SignalSetConfig
 
 np.random.seed(100)

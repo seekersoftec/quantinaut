@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Nautilus Trader - Communication Channel Module
-"""
 from __future__ import annotations
 import asyncio
 import random
@@ -26,6 +23,7 @@ class ChannelType(Enum):
     WHATSAPP = auto()
     WEBHOOK = auto()
     PUSH_NOTIFICATIONS = auto()
+    WEB = auto()
     
     def __str__(self) -> str:
         return self.name.lower()

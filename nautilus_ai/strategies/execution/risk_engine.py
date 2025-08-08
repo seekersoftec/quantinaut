@@ -22,7 +22,7 @@ from nautilus_trader.trading.strategy import Strategy
 import pandas as pd
 
 from nautilus_ai.common import TradeSignal, TradingDecision, save_logs
-from nautilus_ai.notifications.channel import ChannelData
+from nautilus_ai.channels import ChannelData
 from nautilus_ai.strategies.execution.risk_models import BaseRiskModel, RiskModelFactory
 
 

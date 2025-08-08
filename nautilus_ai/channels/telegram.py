@@ -14,7 +14,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.utils.markdown import hbold
 
 from nautilus_trader.core.correctness import PyCondition
-from nautilus_ai.notifications.channel import ChannelConfig, Channel, ChannelType
+from nautilus_ai.channels.channel import ChannelConfig, Channel, ChannelType
 
 
 class TelegramChannelConfig(ChannelConfig, kw_only=True):

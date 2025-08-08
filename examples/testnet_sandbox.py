@@ -37,7 +37,7 @@ from nautilus_trader.live.node import TradingNode
 from nautilus_trader.model.data import BarType
 from nautilus_trader.model.identifiers import InstrumentId
 from nautilus_trader.model.identifiers import TraderId
-from nautilus_ai.notifications.telegram import TelegramChannel, TelegramChannelConfig
+from nautilus_ai.channels.telegram import TelegramChannel, TelegramChannelConfig
 
 # Load environment variables from .env file
 load_dotenv("./.env")

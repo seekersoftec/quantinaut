@@ -1,4 +1,4 @@
-# Nautilus AI
+# Docs
 
 **Nautilus AI** is a powerful module designed to automate the process of training and deploying predictive machine learning models within the [Nautilus Trader](https://github.com/nautechsystems/nautilus_trader/) ecosystem. By leveraging advanced AI techniques, Nautilus AI empowers users to make data-driven trading decisions with greater precision and efficiency.
 
@@ -53,6 +53,7 @@ External integrations
 - https://github.com/sammchardy/python-binance
 
 
+
 ## TODOs: 
 - GUI: 
   ```text
@@ -65,3 +66,18 @@ External integrations
 
     - Grafana is used for visualization and presentation.
   ```
+
+### Extra Projects
+
+- HMM => https://github.com/Martingale42/pml-trader
+
+- https://github.com/Martingale42/data-collector
+
+- https://github.com/Martingale42/vwap-trader
+
+- https://github.com/Martingale42/template-trader
+
+- https://github.com/Martingale42/nautilus-fullstack-example
+
+- https://github.com/Martingale42/all-rl-algorithms
+
