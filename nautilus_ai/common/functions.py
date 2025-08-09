@@ -1,12 +1,12 @@
 import configparser
 import os
 import numpy as np
-import pandas as pd
+import polars as pl
 import yaml
 import json
 import toml
-from typing import Union
 from pathlib import Path
+from typing import Dict, Any, Union
 
 
 def handle_config(path: Union[str, Path], mode="load", data=None):
@@ -104,19 +104,20 @@ def handle_config(path: Union[str, Path], mode="load", data=None):
         raise ValueError("Mode must be 'load' or 'save'")
 
 
-def save_logs(data: dict, logs_file: str = "logs.csv"):
+def save_logs(data: Dict[str, Any], logs_file: str = "logs.csv"):
     """
-    Save logs to a CSV file for analysis using pandas.
+    Save logs to a CSV file for analysis using Polars.
 
     Parameters
     ----------
-    data : dict
+    data : Dict[str, Any]
         A dictionary containing the logs to save.
     logs_file : str
         The file path where logs will be saved. Defaults to "logs_log.csv".
     """
-    df = pd.DataFrame(data)
+    df = pl.DataFrame(data)
+
     if not Path(logs_file).exists():
-        df.to_csv(logs_file, index=False)
+        df.write_csv(logs_file)
     else:
-        df.to_csv(logs_file, mode="a", header=False, index=False)
+        df.write_csv(logs_file, append=True, include_header=False)
