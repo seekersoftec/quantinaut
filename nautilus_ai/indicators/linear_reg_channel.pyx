@@ -57,7 +57,6 @@ cdef class LinearRegressionChannel(Indicator):
         ValueError: If `period` is not greater than zero.
 
     # TODO: Integrate error feedback mechanism, should constantly adjust LRF(self.value) based on previous errors.
-    # TODO: The geometry indicator is to be merged with this indicator 
     """
 
     def __init__(self, int period=152, bint enable_dev=False, double dev_multiplier=2.0):
