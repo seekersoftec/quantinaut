@@ -8,8 +8,8 @@ symbol: BTCUSD
 description: BTCUSD 15min
 freq: 15min
 data_sources:
-  - folder: BTCUSD
-    file: klines
+  - symbol: BTCUSD
+    type: klines
     column_prefix: ""
 feature_sets:
   - column_prefix: ""

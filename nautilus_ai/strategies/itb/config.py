@@ -295,6 +295,9 @@ class ITBConfig(StrategyConfig, frozen=True):
     scale_data: bool = False
     scaler_path: Union[Path, str, None] = None
 
+    # ===========================
+    # ONLINE (PREDICTION) PARAMETERS
+    # Minimum history length required to compute derived features
     # The number of past bars used to compute features for the current bar.
     features_horizon: PositiveInt = 120
 

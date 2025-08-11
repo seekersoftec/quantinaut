@@ -515,18 +515,18 @@ def scrape_and_save_candles(data_sources: List[Dict[str, Any]], mt5_account_id: 
     print(f"Total time: {str(elapsed).split('.')[0]}")
 
 
-if __name__ == '__main__':
-    data_sources = [
-        {"symbol": "EURUSD", "type": "klines"},
-        {"symbol": "GBPUSD", "type": "klines"}
-    ]
-    scrape_and_save_candles(
-        data_sources,
-        mt5_account_id="",
-        mt5_password="",
-        mt5_server="",  
-        timeframe="15min",
-        since="2011-01-01T00:00:00Z", 
-        until="2024-01-01T23:59:59Z",
-    )
+# if __name__ == '__main__':
+#     data_sources = [
+#         {"symbol": "EURUSD", "type": "klines"},
+#         {"symbol": "GBPUSD", "type": "klines"}
+#     ]
+#     scrape_and_save_candles(
+#         data_sources,
+#         mt5_account_id="",
+#         mt5_password="",
+#         mt5_server="",  
+#         timeframe="15min",
+#         since="2011-01-01T00:00:00Z", 
+#         until="2024-01-01T23:59:59Z",
+#     )
 

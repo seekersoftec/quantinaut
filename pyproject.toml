@@ -21,6 +21,10 @@ dependencies = [
 ]
 
 [dependency-groups]
+data = [
+    "ccxt>=4.4.99",
+    "metatrader5>=5.0.5200; sys_platform == 'win32'",
+]
 tests = [
     "pytest>=8.3.2",
     "pytest-asyncio>=1.0.0",

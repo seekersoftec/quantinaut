@@ -5,7 +5,7 @@ from typing import Optional
 def merge_data_sources(data_sources: list, config: dict):
     import pandas as pd
     time_column = config["time_column"]
-    freq = config["freq"]
+    timeframe = config["timeframe"]
 
     for ds in data_sources:
         df = ds.get("df")
@@ -32,7 +32,7 @@ def merge_data_sources(data_sources: list, config: dict):
     # Create common (main) index and empty data frame
     range_start = min([ds["start"] for ds in data_sources])
     range_end = min([ds["end"] for ds in data_sources])
-    index = pd.date_range(range_start, range_end, freq=freq)
+    index = pd.date_range(range_start, range_end, freq=timeframe)
     df_out = pd.DataFrame(index=index)
     df_out.index.name = time_column
 
@@ -57,7 +57,6 @@ def connect_mt5(mt5_account_id: Optional[int] = None, mt5_password: Optional[str
     import MetaTrader5 as mt5
     
     log = logging.getLogger('mt5')
-
     
     # Initialize MetaTrader 5 connection
     if not mt5.initialize():

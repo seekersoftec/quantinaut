@@ -57,7 +57,71 @@ def read_config(file):
     click.echo(json.dumps(config, indent=4, default=str))
 
 
-# Data Preparation (Merge)
+# Data Preparation (Fetch data, Merge, etc.)
+
+"""
+Fetch data from one or multiple source(s).
+"""
+@sage_ctl.command(name="fetch")
+@click.option(
+    '--file', '-f',
+    type=click.Path(exists=True, readable=True, dir_okay=False),
+    required=True,
+    help="Path to the configuration file"
+)
+def fetch_data(file):
+    """
+    🧠 Fetch data from configured sources (e.g., MT5, CCXT).
+
+    Reads the configuration file to determine data sources and fetches data accordingly.
+    """
+    from nautilus_ai.sage.state import State
+
+    config = handle_config(file)
+    State.config.update(config)
+    config = State.config
+
+    if not config.get("venue"):
+        click.secho("❌ ERROR: No venue specified in the configuration.", fg="red")
+        return
+    
+    data_sources = config.get("data_sources", [])
+    if not data_sources:
+        click.secho("❌ ERROR: No data sources defined in the configuration.", fg="red")
+        return
+    
+    click.secho("📥 Fetching data from configured sources...", fg="blue")
+    
+    if "mt5" in config["venue"]:
+        from nautilus_ai.sage.fetch_data_mt5 import connect_mt5, scrape_and_save_candles
+        
+        if not connect_mt5(config["mt5_account_id"], config["mt5_password"], config["mt5_server"]):
+            click.secho("❌ Failed to connect to MT5", fg="red")
+            return
+        
+        scrape_and_save_candles(
+            data_sources,
+            mt5_account_id=config["mt5_account_id"],
+            mt5_password=config["mt5_password"],
+            mt5_server=config["mt5_server"],  
+            timeframe=config["timeframe"],
+            time_column=config["time_column"],
+            since="2011-01-01T00:00:00Z", 
+            until="2024-01-01T23:59:59Z",
+        )
+
+    elif "ccxt" in config["venue"]:
+        from nautilus_ai.sage.fetch_data_ccxt import scrape_and_save_candles
+        
+        if not connect_ccxt(**config["ccxt"]):
+            click.secho("❌ Failed to connect to CCXT", fg="red")
+            return
+    
+    else:
+        click.secho("❌ ERROR: Unsupported venue specified in the configuration.", fg="red")
+        return
+
+    click.secho("✅ Data fetching completed successfully!", fg="green")
 
 
 """
@@ -78,8 +142,11 @@ def merge(file):
     interpolates if specified, and stores a merged output file.
     """
     from nautilus_ai.sage.helpers import merge_data_sources
+    from nautilus_ai.sage.state import State
 
     config = handle_config(file)
+    State.config.update(config)
+    config = State.config
     time_column = config["time_column"]
     data_sources = config.get("data_sources", [])
 
@@ -88,8 +155,9 @@ def merge(file):
         return
 
     now = datetime.now()
-    data_path = Path(config["data_folder"])
+    data_path = Path(config["data_folder"]) / Path(config["venue"])
     symbol = config["symbol"]
+    timeframe = config["timeframe"]
 
     is_train = config.get("train")
     if is_train:
@@ -101,9 +169,9 @@ def merge(file):
         window_size += features_horizon
 
     for ds in data_sources:
-        folder = ds.get("folder")
-        file_name = ds.get("file", folder)
-        file_path = Path(data_path / folder / file_name)
+        symbol = ds.get("symbol")
+        data_type = ds.get("type")
+        file_path = (data_path / f"{symbol}_{timeframe}_{data_type}".lower()).with_suffix(".csv")
         if not file_path.suffix:
             file_path = file_path.with_suffix(".csv")
 
