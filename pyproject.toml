@@ -9,6 +9,7 @@ requires-python = ">=3.12,<3.14"
 dependencies = [
     "nautilus-trader>=1.219.0",
     "pandas>=2.2.3",
+    "polars[async,numpy]>=1.32.2",
     "pyparsing>=3.2.1",
     "python-dotenv>=1.0.1",
     "toml>=0.10.2",
@@ -17,7 +18,6 @@ dependencies = [
     "lightgbm>=4.6.0",
     "joblib>=1.5.1",
     "river>=0.22.0",
-    "polars[async,numpy]>=1.32.2",
 ]
 
 [dependency-groups]

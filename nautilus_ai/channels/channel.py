@@ -140,7 +140,7 @@ class Channel(Actor, ABC):
         pass
     
     def publish_channel_data(self, data: ChannelData):
-        """Publishes ChannelData to the system."""
+        """Publishes Data to the system."""
         # Ensure the data has the correct ID before publishing
         PyCondition.is_true(
             data.channel_id == self.channel_id,

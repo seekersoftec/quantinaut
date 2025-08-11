@@ -67,6 +67,10 @@ External integrations
     - Grafana is used for visualization and presentation.
   ```
 
+- https://testnet.binancefuture.com/en/futures/BTCUSDT
+
+- https://account.protonvpn.com/downloads
+
 ### Extra Projects
 
 - HMM => https://github.com/Martingale42/pml-trader
@@ -80,4 +84,5 @@ External integrations
 - https://github.com/Martingale42/nautilus-fullstack-example
 
 - https://github.com/Martingale42/all-rl-algorithms
+
 

@@ -150,6 +150,3 @@ async def main():
 if __name__ == "__main__":
     asyncio.run(main())
     
-    
-# https://testnet.binancefuture.com/en/futures/BTCUSDT
-# https://account.protonvpn.com/downloads
