@@ -1,75 +1,119 @@
 # Installation Guide
 
-This guide outlines methods for installing and running nautilus_ai:
+This guide outlines methods for installing and running **nautilus\_ai** using [`uv`](https://github.com/astral-sh/uv), a fast Python package manager and environment tool.
 
-## Local Installation
+---
 
-This method installs NautilusAI directly on your machine.
+## Prerequisites
 
-**Prerequisites:**
+* **Git**
+* **Python 3.11+**
+* **`uv` installed**
 
-- Git
-- Python 3.11+
+  * Install with pip:
 
-**Steps:**
+    ```bash
+    pip install uv
+    ```
+  * Or via shell script:
 
-1. **Clone the NautilusAI Repository:**
+    ```bash
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    ```
 
-   ```bash
-   git clone https://github.com/seekersoftec/nautilus_ai.git
-   ```
+---
 
-2. **Navigate to the Project Directory:**
+## 1. Quick Install (Recommended)
 
-   ```bash
-   cd nautilus_ai
-   ```
+If you want to clone the repo, create a venv, and install dependencies in one go:
 
-3. **(Optional) Setup Environment:** You can choose from any of the following environment setups. First **install system dependencies:**
-
-   ```bash
-      sudo apt-get update
-
-      sudo apt-get install -y build-essential clang wget curl git libbz2-dev python3-pip
-
-      # sudo chmod +x scripts/install-talib.sh && bash scripts/install-talib.sh
-
-      # sudo chmod +x scripts/install-pygame.sh && bash scripts/install-pygame.sh # (Optional)
-
-      curl -sSL https://install.python-poetry.org | python -
-
-   ```
-
-   - **(Option A) Create a Virtual Environment:** A virtual environment helps isolate project dependencies. Here's an example using `venv`:
-
-     ```bash
-        python3 -m venv .venv  # Use a different venv manager if preferred
-        source .venv/bin/activate
-     ```
-
-   - **(Option B) Create a Conda Environment:** A conda environment also helps isolate project dependencies. You can also control the version of python too:
-
-     ```bash
-     conda create --name nautilus_ai python=3.11  # Use the tested and recommended python version
-     # using conda v4:
-      conda activate nautilus_ai
-
-      # OR
-
-      # using conda v3:
-      source activate nautilus_ai
-
-      # Verify python version:
-      python --version
-     ```
-
-4. **Install Dependencies:**
+**Linux / macOS**
 
 ```bash
-   poetry install # recommended package manager
-
-   # OR
-
-   pip install --upgrade pip
-   pip install -e .
+git clone https://github.com/seekersoftec/nautilus_ai.git && \
+cd nautilus_ai && \
+uv venv && \
+source .venv/bin/activate && \
+uv pip install -e .
 ```
+
+**Windows PowerShell**
+
+```powershell
+git clone https://github.com/seekersoftec/nautilus_ai.git; `
+cd nautilus_ai; `
+uv venv; `
+.venv\Scripts\Activate.ps1; `
+uv pip install -e .
+```
+
+After installation, run NautilusAI:
+
+```bash
+python -m nautilus_ai
+```
+
+---
+
+## 2. Manual Installation
+
+If you prefer more control over the installation process:
+
+### Step 1 – Clone the Repository
+
+```bash
+git clone https://github.com/seekersoftec/nautilus_ai.git
+cd nautilus_ai
+```
+
+### Step 2 – Install System Dependencies (Linux Example)
+
+```bash
+sudo apt-get update
+sudo apt-get install -y build-essential clang wget curl git libbz2-dev python3-pip
+
+# Optional: Install TA-Lib
+# sudo chmod +x scripts/install-talib.sh && bash scripts/install-talib.sh
+
+# Optional: Install Pygame
+# sudo chmod +x scripts/install-pygame.sh && bash scripts/install-pygame.sh
+```
+
+### Step 3 – Setup a Virtual Environment
+
+**Option A – uv-managed venv (Recommended)**
+
+```bash
+uv venv
+source .venv/bin/activate  # macOS/Linux
+.venv\Scripts\Activate.ps1 # Windows PowerShell
+```
+
+**Option B – Conda Environment**
+
+```bash
+conda create --name nautilus_ai python=3.11
+conda activate nautilus_ai
+python --version  # Verify Python version
+```
+
+**Option C – Python venv**
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate  # macOS/Linux
+.venv\Scripts\Activate.ps1 # Windows PowerShell
+```
+
+### Step 4 – Install Dependencies
+
+```bash
+uv pip install -e .
+```
+
+Or from `requirements.txt`:
+
+```bash
+uv pip install -r requirements.txt
+```
+
