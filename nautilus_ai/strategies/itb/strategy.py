@@ -28,9 +28,11 @@ from nautilus_ai.strategies.itb.config import AlgorithmConfig, ITBConfig, Output
 np.random.seed(100)
     
 
-class ITB(Strategy):
+class ITBStrategy(Strategy):
     """
         Intelligent Trading Strategy
+        
+        Uses offline approach.
     """
     def __init__(self, config: ITBConfig) -> None:
         PyCondition.type(config.data_folder, Path, "data_folder")

@@ -19,7 +19,7 @@ class GeneratorType(Enum):
     PREPARATION = auto() # For merging and other data prep
     FEATURE = auto()     # For feature generation
     LABEL = auto()       # For label generation
-    MODEL = auto()       # For training and prediction
+    MODEL = auto()       # For training and prediction(includes rolling predictions)
     SIGNAL = auto()      # For signal generation
 
     def __str__(self) -> str:
@@ -51,22 +51,24 @@ class Generator(Actor, ABC):
         self.generator_id = None
 
     @abstractmethod
-    def generate(self, df: pl.DataFrame, **kwargs) -> Tuple[pl.DataFrame, List[str]]:
+    def generate(self, data: GeneratorData) -> Tuple[pl.DataFrame, List[str]]:
         """
         Generates and appends new data to the input DataFrame.
 
         Parameters
         ----------
-        df : pl.DataFrame
-            The input DataFrame containing the raw or processed data.
-        **kwargs
-            Additional keyword arguments specific to the generator's logic, such as a
-            `last_rows` parameter for online updates.
+        data : GeneratorData
+            An object containing:
+            - df (pl.DataFrame): The input DataFrame containing the raw or processed data.
+            - kwargs (dict): Additional parameters specific to the generator's logic,
+            such as a `last_rows` parameter for online updates, or generator-specific settings.
 
         Returns
         -------
         Tuple[pl.DataFrame, List[str]]
-            A tuple containing the modified DataFrame and a list of the new column names added.
+            A tuple containing:
+            - pl.DataFrame: The modified DataFrame with new columns added.
+            - List[str]: The names of the new columns generated.
         """
         pass
 
@@ -128,9 +130,9 @@ class Generator(Actor, ABC):
         PyCondition.not_none(data, "data")
 
         if isinstance(data, GeneratorData) and data.generator_id == self.generator_id:
-            if data.message is not None:
+            if data.df is not None or data.model is not None:
                 # Use a new task to send the message to avoid blocking on_data
-                asyncio.create_task(self.send_message(message=data.message, data=data.data))
+                self.generate(data)
             else:
                 self.log.info(f"Received empty message for {self.generator_id}", color=LogColor.YELLOW)
 

@@ -24,17 +24,27 @@ class Return(Generator):
         df : pl.DataFrame
             The input DataFrame containing the 'close' price column.
         **kwargs
-            Optional keyword arguments, including `shift` to specify the look-ahead period.
-            Defaults to -1 for a one-period-ahead percentage change.
+            Optional keyword arguments:
+            - shift: int (default=-1) → number of periods to look ahead (negative for future returns)
+            - use_native_pct_change: bool (default=False) → if True, uses Polars' built-in pct_change(periods=shift)
 
         Returns
         -------
         Tuple[pl.DataFrame, List[str]]
-            The DataFrame with the new 'return' column and a list of the new column name.
+            DataFrame with new 'return' column and list of the new column names.
         """
-        # TODO: Verify and fix this logic, should shift be used in pct_change itself instead of a 1 step process?
         shift = kwargs.get("shift", -1)
-        df = df.with_columns(
-            (pl.col("close").pct_change().shift(shift)).alias("return")
-        )
+        use_native_pct_change = kwargs.get("use_native_pct_change", False)
+
+        if use_native_pct_change:
+            df = df.with_columns(
+                pl.col("close").pct_change(periods=shift).alias("return")
+            )
+        else:
+            df = df.with_columns(
+                ((pl.col("close").shift(-shift) - pl.col("close")) / pl.col("close")).alias("return")
+                if shift < 0 else
+                ((pl.col("close") - pl.col("close").shift(shift)) / pl.col("close").shift(shift)).alias("return")
+            )
+
         return df, ["return"]

@@ -340,6 +340,7 @@ class GeneratorData(Data):
         metadata: Optional[Dict[str, Any]] = None,
         model: Any = None,
         timestamp: Optional[int] = None,
+        **kwargs,
     ):
         if df is None:
             df = pl.DataFrame()
@@ -357,6 +358,8 @@ class GeneratorData(Data):
         self.metadata = metadata
         self.model = model
         self.timestamp = timestamp
+        self.kwargs = kwargs
+
 
 
 class ModelPrediction(Data):
