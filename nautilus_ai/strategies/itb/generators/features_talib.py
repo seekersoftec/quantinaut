@@ -2,16 +2,30 @@
 
 import importlib
 import sys
+from typing import Tuple, List
 
 import numpy as np
-import pandas as pd
-from nautilus_ai.strategies.itb.generators.generator import Generator, register_generator
+import polars as pl
+from nautilus_ai.common.data import GeneratorData
+from nautilus_ai.strategies.itb.generators.generator import Generator, GeneratorType, register_generator
 from nautilus_ai.strategies.itb.generators.utils import _aggregate_last_rows, _convert_to_relative
 
 
 @register_generator("talib")
 class TALib(Generator):
-    def generate(self, df, last_rows=0, **kwargs):
+    """
+    A generator that calculates the percentage change of a closing price.
+    """
+    def __init__(self, config):
+        super().__init__(config)
+        # Set the generator type to LABEL upon initialization
+        self.set_generator_type(GeneratorType.FEATURE)
+        self.generator_id = f"{GeneratorType.FEATURE}-talib"
+        
+    def generate(self, data: GeneratorData) -> Tuple[pl.DataFrame, List[str]]:
+        df = data.df
+        last_rows = data.kwargs.get("last_rows", 0)
+
         return _talib(df, self.config, last_rows)
 
 

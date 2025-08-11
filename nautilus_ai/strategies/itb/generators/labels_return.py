@@ -1,6 +1,7 @@
 # generators/labels_return.py
 import polars as pl
 from typing import List, Tuple
+from nautilus_ai.common.data import GeneratorData
 from nautilus_ai.strategies.itb.generators.generator import Generator, GeneratorType, register_generator
 
 
@@ -15,30 +16,35 @@ class Return(Generator):
         self.set_generator_type(GeneratorType.LABEL)
         self.generator_id = f"{GeneratorType.LABEL}-return"
 
-    def generate(self, df: pl.DataFrame, **kwargs) -> Tuple[pl.DataFrame, List[str]]:
+    def generate(self, data: GeneratorData) -> Tuple[pl.DataFrame, List[str]]:
         """
         Generates a 'return' column, with a configurable look-ahead period.
 
         Parameters
         ----------
-        df : pl.DataFrame
-            The input DataFrame containing the 'close' price column.
-        **kwargs
-            Optional keyword arguments:
-            - shift: int (default=-1) → number of periods to look ahead (negative for future returns)
-            - use_native_pct_change: bool (default=False) → if True, uses Polars' built-in pct_change(periods=shift)
+        data : GeneratorData
+            An object containing:
+            - df (pl.DataFrame): The input DataFrame with the 'close' price column.
+            - kwargs (dict): Additional parameters, including:
+                * shift (int, default=-1) → Number of periods to look ahead
+                  (negative for future returns, positive for past returns).
+                * use_native_pct_change (bool, default=False) → If True, uses Polars'
+                  built-in pct_change(n=shift) directly.
 
         Returns
         -------
         Tuple[pl.DataFrame, List[str]]
-            DataFrame with new 'return' column and list of the new column names.
+            A tuple containing:
+            - pl.DataFrame: The DataFrame with the new 'return' column.
+            - List[str]: The name of the new column ("return").
         """
-        shift = kwargs.get("shift", -1)
-        use_native_pct_change = kwargs.get("use_native_pct_change", False)
+        df = data.df
+        shift = data.kwargs.get("shift", -1)
+        use_native_pct_change = data.kwargs.get("use_native_pct_change", False)
 
         if use_native_pct_change:
             df = df.with_columns(
-                pl.col("close").pct_change(periods=shift).alias("return")
+                pl.col("close").pct_change(n=shift).alias("return")
             )
         else:
             df = df.with_columns(
