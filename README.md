@@ -2,12 +2,23 @@
 
 Nautilus AI is a project that aims to create machine learning-based trading bots, leveraging the high-performance capabilities of the [**Nautilus Trader**](https://github.com/nautechsystems/nautilus_trader/) framework. The core objective is to replicate and expand upon the concepts of the [**intelligent-trading-bot**](https://github.com/asavinov/intelligent-trading-bot) project, focusing on using cutting-edge machine learning algorithms and sophisticated feature engineering to build a robust and autonomous trading system.
 
+## Approaches
 
-### Approaches
+Nautilus AI will explore **two complementary design paths**:
 
-The project will explore two primary approaches for building the ML-based trading bots:
+### 1. Indicator-Based ML
 
-* **Indicator-Based Approach**: Create new machine learning-based indicators. These indicators can be trained and optimized independently to generate signals (e.g., buy, sell, hold) that can then be used by a traditional trading strategy. This approach is well-suited for **online learning**, where the model can continuously adapt to new market data in real-time.
+In this approach, ML models are developed as **predictive indicators** — akin to a leading technical indicator, but trained on historical and live market data.
 
-* **Strategy-Based Approach**: Develop complete machine learning-based trading strategies. This involves training a model to directly output trading decisions (e.g., entering or exiting a position) based on a wide range of market and historical data. This method is often more suitable for **offline learning**, where the model is trained on a large dataset and then deployed to make predictions without further training.
+* **Purpose:** Generate signals (buy/sell/hold, directional probabilities, volatility forecasts, etc.).
+* **Integration:** Output feeds into any strategy (ML-based or traditional rule-based).
+* **Best for:** **Online learning**, where the model updates continually as new data arrives, adapting to evolving market conditions.
+
+### 2. Strategy-Based ML
+
+Here, ML is embedded directly into the **strategy logic**, allowing the model to decide **when to enter, exit, or hold** based on a holistic market view.
+
+* **Purpose:** Full trade decision-making pipeline, from signal generation to execution.
+* **Integration:** May incorporate multiple data sources and indicators (including ML-based ones).
+* **Best for:** **Offline learning**, where models are trained on large historical datasets, validated, and then deployed in a live environment.
 

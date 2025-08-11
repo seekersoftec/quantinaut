@@ -26,6 +26,9 @@ tests = [
     "pytest-asyncio>=1.0.0",
 ]
 
+[project.scripts]
+sage = "nautilus_ai.sage:sage_ctl"
+
 [tool.uv.sources]
 smartmoneyconcepts = { git = "https://github.com/tradershubspace/smart-money-concepts.git" }
 

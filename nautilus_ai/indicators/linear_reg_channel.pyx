@@ -169,7 +169,7 @@ cdef class LinearRegressionChannel(Indicator):
         - Residuals and R² are computed for the price regression.
 
         Sources:
-        https://tradethatswing.com/how-to-use-regression-channels-to-aid-in-forex-trade-selection-and-analysis/
+            - https://tradethatswing.com/how-to-use-regression-channels-to-aid-in-forex-trade-selection-and-analysis/
         """
         cdef double hlc3 = (high + low + close) / 3.0
 
@@ -272,7 +272,7 @@ cdef class LinearRegressionChannel(Indicator):
         self.upper = 0.0
         self.lower = 0.0
         self.value = 0.0
-        self.next_estimated_price = 0.0 # Reset new attribute
+        self.next_estimated_price = 0.0 
         self.R2 = 0.0
         self.dev = 0.0
         self.count = 0
