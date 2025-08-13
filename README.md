@@ -1,6 +1,6 @@
 # Nautilus AI
 
-Nautilus AI is a project that aims to create machine learning-based trading bots, leveraging the high-performance capabilities of the [**Nautilus Trader**](https://github.com/nautechsystems/nautilus_trader/) framework. The core objective is to replicate and expand upon the concepts of the [**intelligent-trading-bot**](https://github.com/asavinov/intelligent-trading-bot) project, focusing on using cutting-edge machine learning algorithms and sophisticated feature engineering to build a robust and autonomous trading system.
+Nautilus AI is a project that aims to create machine learning-based trading bots, leveraging the high-performance capabilities of the [**Nautilus Trader**](https://github.com/nautechsystems/nautilus_trader/) framework. The core objective is to use cutting-edge machine learning algorithms and feature engineering to build a robust and autonomous trading system.
 
 ## Approaches
 
@@ -21,4 +21,13 @@ Here, ML is embedded directly into the **strategy logic**, allowing the model to
 * **Purpose:** Full trade decision-making pipeline, from signal generation to execution.
 * **Integration:** May incorporate multiple data sources and indicators (including ML-based ones).
 * **Best for:** **Offline learning**, where models are trained on large historical datasets, validated, and then deployed in a live environment.
+
+
+## Sources
+
+- https://github.com/nautechsystems/nautilus_trader/
+- https://github.com/online-ml/river/
+- https://github.com/asavinov/intelligent-trading-bot.git 
+- https://github.com/microsoft/qlib.git
+- https://github.com/vnpy/vnpy.git
 

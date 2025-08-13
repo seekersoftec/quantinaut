@@ -96,21 +96,22 @@ def scrape_and_save_candles(exchange_id: str, symbol: str, timeframe: str, since
 
 
 
-if __name__ == "__main__":
-    # scrape_and_save_candles(exchange_id="bybit", symbol="XRP/USDT", timeframe="5m", 
-    #                         since="2018-01-01T00:00:00Z", until="2025-06-01T23:59:59Z", limit=1000)
+
+# if __name__ == "__main__":
+#     # scrape_and_save_candles(exchange_id="bybit", symbol="XRP/USDT", timeframe="5m", 
+#     #                         since="2018-01-01T00:00:00Z", until="2025-06-01T23:59:59Z", limit=1000)
     
-    # Exchange options: | binanceusdm | bybit
-    # scrape_and_save_candles("binance", "BTC/USDT", "4h", "2011-01-01T00:00:00Z", "2023-12-01T00:00:00Z", 1000, exchange_options={'defaultType': 'future'})
-    # 1000RATS - 5m
-    # XRP - 15m
+#     # Exchange options: | binanceusdm | bybit
+#     # scrape_and_save_candles("binance", "BTC/USDT", "4h", "2011-01-01T00:00:00Z", "2023-12-01T00:00:00Z", 1000, exchange_options={'defaultType': 'future'})
+#     # 1000RATS - 5m
+#     # XRP - 15m
     
-    exchanges = {
-        'bybit': ("XRP/USDT", "5m"),
-        'binanceusdm': ("ETH/USDT", "5m"),
-        # 'binanceusdm': ("XRP/USDT", "5m"),
-    }
-    for exchange_id, value in exchanges.items():
-        scrape_and_save_candles(exchange_id=exchange_id, symbol=value[0], timeframe=value[1], 
-                            since="2018-01-01T00:00:00Z", until="2025-06-01T23:59:59Z", limit=1000)
-        time.sleep(0.1)
+#     exchanges = {
+#         'bybit': ("XRP/USDT", "5m"),
+#         'binanceusdm': ("ETH/USDT", "5m"),
+#         # 'binanceusdm': ("XRP/USDT", "5m"),
+#     }
+#     for exchange_id, value in exchanges.items():
+#         scrape_and_save_candles(exchange_id=exchange_id, symbol=value[0], timeframe=value[1], 
+#                             since="2018-01-01T00:00:00Z", until="2025-06-01T23:59:59Z", limit=1000)
+#         time.sleep(0.1)

@@ -7,6 +7,6 @@ Nautilus Trader - Communication Channel Module
 - WhatsApp
 - Webhook
 - Push Notifications
-- Web (Can add a UI interface to this)
+- Web (Can add a UI interface to this, from https://github.com/karanpratapsingh/HyperTrade/)
 """
 from .channel import *

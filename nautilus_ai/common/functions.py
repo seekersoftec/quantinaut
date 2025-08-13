@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Dict, Any, Union
 
 
+
 def handle_config(path: Union[str, Path], mode="load", data=None):
     """
     Loads or saves configuration data in multiple formats based on file extension.
@@ -54,7 +55,7 @@ def handle_config(path: Union[str, Path], mode="load", data=None):
 
         elif ext in [".yaml", ".yml"]:
             with open(path, "r") as f:
-                return yaml.safe_load(f)
+                return yaml.safe_load(f) # https://github.com/microsoft/qlib/blob/main/qlib/cli/run.py
 
         elif ext == ".toml":
             return toml.load(path)
