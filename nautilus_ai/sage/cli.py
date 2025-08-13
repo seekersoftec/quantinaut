@@ -12,14 +12,7 @@ from pathlib import Path
 from concurrent.futures import ProcessPoolExecutor
 from nautilus_ai.common import handle_config
 
-
-# from common.model_store import *
-
 np.random.seed(100)
-
-
-PACKAGE_ROOT = Path(__file__).parent.parent
-
 
 class State:
     """Globally visible variables."""
