@@ -176,6 +176,8 @@ class SageCli:
         click.secho(f"\n✅ Loaded configuration from: {file}\n", fg='green')
         click.echo(json.dumps(self._config, indent=4, default=str))
 
+    # Data Preparation (Fetch data, Merge, etc.)
+
     def fetch(self, path: Path = Path('./'), name: str = 'workflow.yml'):
         """
         🧠 Fetch data from one or multiple configured source(s)(e.g., MT5, CCXT).
@@ -244,6 +246,95 @@ class SageCli:
             return
 
         click.secho("✅ Data fetching completed successfully!", fg="green")
+
+
+    """
+    Create one output file from multiple input data files. 
+    """
+    def merge(self, path: Path = Path('./'), name: str = 'workflow.yml'):
+        """
+        🧩 Merge multiple data sources into a unified dataframe.
+
+        Reads CSV data sources defined in the config, aligns them on a regular time index, 
+        interpolates if specified, and stores a merged output file.
+        """
+        from nautilus_ai.sage.merge import merge_data_sources
+
+        self.config(path, name)
+        
+        time_column = self._config["time_column"]
+        data_sources = self._config.get("data_sources", [])
+
+        if not data_sources:
+            click.secho("❌ ERROR: No data sources defined.", fg="red")
+            return
+
+        now = datetime.now()
+        data_path = Path(self._config["data_folder"]) / Path(self._config["venue"])
+        symbol = self._config["symbol"]
+        timeframe = self._config["timeframe"]
+
+        is_train = self._config.get("train")
+        if is_train:
+            window_size = self._config.get("train_length")
+        else:
+            window_size = self._config.get("predict_length")
+        features_horizon = self._config.get("features_horizon")
+        if window_size:
+            window_size += features_horizon
+
+        for ds in data_sources:
+            symbol = ds.get("symbol")
+            data_type = ds.get("type")
+            file_path = (data_path / f"{symbol}_{timeframe}_{data_type}".lower()).with_suffix(".csv")
+            if not file_path.suffix:
+                file_path = file_path.with_suffix(".csv")
+
+            if not file_path.exists():
+                click.secho(f"❌ File not found: {file_path}", fg="red")
+                return
+
+            if file_path.suffix == ".parquet":
+                df = pd.read_parquet(file_path)
+            elif file_path.suffix == ".csv":
+                df = pd.read_csv(file_path, parse_dates=[time_column], date_format="ISO8601")
+            else:
+                click.secho(f"❌ Unsupported input format: {file_path.suffix}", fg="red")
+                return
+            click.secho(f"📄 Loaded {file_path} with {len(df)} rows", fg="green")
+            if window_size:
+                df = df.tail(window_size)
+                df = df.reset_index(drop=True)
+            ds["df"] = df
+
+        df_merged = merge_data_sources(data_sources, self._config)
+
+        out_path = data_path / symbol / self._config.get("merge_file_name")
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+
+        df_merged = df_merged.reset_index()
+        if out_path.suffix == ".parquet":
+            df_merged.to_parquet(out_path, index=False)
+        elif out_path.suffix == ".csv":
+            df_merged.to_csv(out_path, index=False)
+        else:
+            click.secho(f"❌ Unsupported output format: {out_path.suffix}", fg="red")
+            return
+
+        click.secho(f"✅ Merged file saved: {out_path} with {len(df_merged)} rows", fg="cyan")
+        click.secho(f"⏱️ Completed in {str(datetime.now() - now).split('.')[0]}", fg="blue")
+
+
+
+# Features
+
+# Labels
+
+# Train Model
+
+# Test Model
+
+# Save Model
 
 
     
