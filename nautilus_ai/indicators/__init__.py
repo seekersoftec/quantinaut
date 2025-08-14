@@ -1,5 +1,6 @@
 """
+TODO:
 
-Enhanced Triple Barrier:
+TripleBarrierND:
  - https://github.com/nkonts/barrier-method
 """

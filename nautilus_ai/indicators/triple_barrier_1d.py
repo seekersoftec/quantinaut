@@ -1,4 +1,4 @@
-# nautilus_ai/indicators/triple_barrier.py
+# nautilus_ai/indicators/triple_barrier_1d.py
 from collections import deque
 from typing import Any
 from nautilus_trader.core.correctness import PyCondition
