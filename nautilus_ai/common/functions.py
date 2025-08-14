@@ -56,7 +56,7 @@ def handle_config(path: Union[str, Path], mode="load", data=None):
         elif ext in [".yaml", ".yml"]:
             with open(path, "r") as f:
                 return yaml.safe_load(f) # https://github.com/microsoft/qlib/blob/main/qlib/cli/run.py
-
+                # from ruamel.yaml import YAML
         elif ext == ".toml":
             return toml.load(path)
 

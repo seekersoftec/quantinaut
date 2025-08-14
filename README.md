@@ -26,8 +26,10 @@ Here, ML is embedded directly into the **strategy logic**, allowing the model to
 ## Sources
 
 - https://github.com/nautechsystems/nautilus_trader/
-- https://github.com/online-ml/river/
 - https://github.com/asavinov/intelligent-trading-bot.git 
 - https://github.com/microsoft/qlib.git
 - https://github.com/vnpy/vnpy.git
-
+- https://github.com/online-ml/river/
+- https://github.com/Martingale42/pml-trader
+- https://github.com/limx0/nautilus_talks
+- https://github.com/hudson-and-thames/mlfinlab/
