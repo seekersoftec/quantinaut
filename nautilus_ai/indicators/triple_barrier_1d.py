@@ -1,13 +1,17 @@
 # nautilus_ai/indicators/triple_barrier.py
+from collections import deque
+from typing import Any
 from nautilus_trader.core.correctness import PyCondition
 from nautilus_trader.indicators.base.indicator import Indicator
 from nautilus_trader.model.data import Bar
 from nautilus_trader.model.data import QuoteTick
 from nautilus_trader.model.data import TradeTick
 from nautilus_trader.model.enums import PriceType
+from river import compose, linear_model, preprocessing, metrics
+from river import multiclass, optim
 
 
-class TripleBarrier(Indicator):
+class TripleBarrier1D(Indicator):
     """
     Logic regarding labeling from Advances in Financial Machine Learning, chapter 3. 
     In particular the Triple Barrier Method and Meta-Labeling.
@@ -60,9 +64,11 @@ class TripleBarrier(Indicator):
         
         self._model = None
         self._train_model = False  # Flag to indicate if the model is being trained
+        self._prices = deque(maxlen=period)
+        self._batch_count = 0  # Counter for the number of bars processed in the current batch
+        self._metric = metrics.MacroF1()
         
-        self.value = 0.0  # <-- stateful value
-        self.count = 0  # <-- stateful value
+        self.value = 0.0  
 
     def handle_quote_tick(self, tick: QuoteTick):
         """
@@ -118,29 +124,47 @@ class TripleBarrier(Indicator):
         """
         # Keep count of the prices stored, once it is >= period 
         # send it to be processed and clear the count.
+        
+        self._prices.append(value)
+        
+        # Check if this is the initial input
+        if not self.has_inputs:
+            self.value = value
+
+        self.value = self.alpha * value + ((1.0 - self.alpha) * self.value)
+        self.count += 1
+
+        # Initialization logic
+        if not self.initialized:
+            self._set_has_inputs(True)
+            if len(self._prices) >= self.period:
+                self._set_initialized(True)
         pass
     
-    def get_barrier_labels(self, data):
+    def get_label(self, prices: list) -> int:
         """
-        Generate labels based on the triple barrier method.
+        Generate label based on the triple barrier method.
 
         Parameters
         ----------
-        data : list
-            The input data to generate labels from.
+        prices : list
+            The input price history (float values).
 
         Returns
         -------
-        list
-            The generated labels.
+        int
+            The generated label value, where -1 is a loss, 0 is no change, and 1 is a gain.
         """
-        # Implement the logic to generate labels based on the triple barrier method.
-        # This is a placeholder for the actual implementation.
-        # return [0] * len(data)
-        # if the current price - the price at the time of the barrier is greater than the upper barrier, return 1
-        # if the current price - the price at the time of the barrier is less than the lower barrier, return -1
-        # else return 0
-        pass
+        if not prices or len(prices) < 2:
+            return 0
+        current_price = prices[-1]
+        for prev_price in prices[:-1]:
+            diff = (current_price - prev_price) / prev_price
+            if diff >= self.upper:
+                return 1
+            elif diff <= self.lower:
+                return -1
+        return 0
     
     def get_model(self):
         """
@@ -153,17 +177,25 @@ class TripleBarrier(Indicator):
         """
         return self._model
     
-    def set_model(self, model):
+    def set_model(self, model: Any = None):
         """
         Set the model for online learning.
 
         Parameters
         ----------
-        model : object
+        model : Optional[Any]
             The online learning model to be used.
         """
-        PyCondition.not_none(model, "model")
-        self._model = model
+        # PyCondition.not_none(model, "model")
+        
+        if model is not None:
+            self._model = model
+        
+        # River pipeline: scaler + logistic regression (multiclass OneVsRest)
+        base = preprocessing.StandardScaler() | linear_model.LogisticRegression(
+            optimizer=optim.SGD(0.05), l2=1e-4
+        )
+        self._model = multiclass.OneVsRestClassifier(base)
         # External model should be compatible with River's online learning paradigm.
         
     def save_model(self, path: str):
