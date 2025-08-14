@@ -155,7 +155,7 @@ class TripleBarrier1D(Indicator):
         int
             The generated label value, where -1 is a loss, 0 is no change, and 1 is a gain.
         """
-        if not prices or len(prices) < 2:
+        if not prices or len(prices) < self.period:
             return 0
         current_price = prices[-1]
         for prev_price in prices[:-1]:

@@ -13,7 +13,7 @@
 - **Efficient Data Management:** Automatically cleans and preprocesses historical data, streamlining the data preparation process.
 - **Dimensionality Reduction:** Reduces the complexity of the feature space, improving model performance and reducing computational costs.
 
-**Nautilus AI is inspired by FreqAI, which explains some of the similarities you might see.**
+**Nautilus AI is inspired by FreqAI**
 
 # References
 

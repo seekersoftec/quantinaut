@@ -1,7 +1,34 @@
+<p align="center">
+  <img src="docs/assets/logo.png" alt="Nautilus AI Logo" width="100"/>
+</p>
 
-# 🚀 Nautilus AI
+<h1 align="center">Nautilus AI</h1>
+<p align="center"><em>Breaking Alpha</em></p>
+
+<p align="center">
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.12%2B-blue" alt="Python"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License"></a>
+  <a href="https://github.com/seekersoftec/nautilus_ai/actions"><img src="https://img.shields.io/github/actions/workflow/status/seekersoftec/nautilus_ai/tests.yml?branch=main" alt="Build Status"></a>
+  <a href="https://github.com/seekersoftec/nautilus_ai/actions"><img src="https://img.shields.io/badge/Tests-Passing-brightgreen" alt="Tests"></a>
+  <a href="../../CONTRIBUTING.md"><img src="https://img.shields.io/badge/Contributions-Welcome-orange.svg" alt="Contributions"></a>
+  <a href="https://github.com/psf/black"><img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Code Style"></a>
+  <a href="https://nautilustrader.io"><img src="https://img.shields.io/badge/Made%20with-Nautilus%20Trader-orange" alt="Nautilus Trader"></a>
+  <a href="https://scikit-learn.org/"><img src="https://img.shields.io/badge/Machine%20Learning-Active-green" alt="Machine Learning"></a>
+  <a href="https://github.com/seekersoftec/nautilus_ai/stargazers"><img src="https://img.shields.io/github/stars/seekersoftec/nautilus_ai?style=social" alt="Stars"></a>
+</p>
+
+
+<!-- --- -->
+
+**Nautilus AI** — *An open-source, fully autonomous algorithmic trading engine integrating machine learning, quantitative analysis, and feature engineering to deliver adaptive, high-performance strategies in real-time markets.*
+
+<!-- --- -->
+
+## 🚀 Introduction
 
 Welcome to **Nautilus AI** — your gateway to the future of algorithmic trading! This project brings together the power of machine learning and the speed of the [Nautilus Trader](https://github.com/nautechsystems/nautilus_trader/) framework to build intelligent, adaptive trading bots. Whether you're a quant, a developer, or just curious about AI in finance, Nautilus AI is designed to help you experiment, learn, and deploy cutting-edge trading strategies.
+
+---
 
 ## 🌟 Project Vision
 
