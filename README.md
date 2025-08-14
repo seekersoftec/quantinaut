@@ -48,19 +48,18 @@ Ready to dive in? Check out the [docs](docs/README.md) or explore the `examples/
 
 ---
 
-
-
 ## 📚 Sources & Inspiration
 
 - [Nautilus Trader](https://github.com/nautechsystems/nautilus_trader/)
-- [Intelligent Trading Bot](https://github.com/asavinov/intelligent-trading-bot.git)
+- [Nautilus Talks](https://github.com/limx0/nautilus_talks)
 - [Microsoft Qlib](https://github.com/microsoft/qlib.git)
+- [FreqTrade](https://github.com/freqtrade/freqtrade/)
 - [VNpy](https://github.com/vnpy/vnpy.git)
 - [River (Online ML)](https://github.com/online-ml/river/)
-- [PML Trader](https://github.com/Martingale42/pml-trader)
-- [Nautilus Talks](https://github.com/limx0/nautilus_talks)
 - [MLFinLab](https://github.com/hudson-and-thames/mlfinlab/)
 - [HyperTrade](https://github.com/karanpratapsingh/HyperTrade/)
+- [PML Trader](https://github.com/Martingale42/pml-trader)
+- [Intelligent Trading Bot](https://github.com/asavinov/intelligent-trading-bot.git)
 
 ---
 
