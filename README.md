@@ -12,8 +12,6 @@ Nautilus AI aims to:
 
 ---
 
-
-
 ## 🧠 How Nautilus AI Works
 
 Nautilus AI separates **where** different types of machine learning shine in a trading stack:
@@ -62,6 +60,7 @@ Ready to dive in? Check out the [docs](docs/README.md) or explore the `examples/
 - [PML Trader](https://github.com/Martingale42/pml-trader)
 - [Nautilus Talks](https://github.com/limx0/nautilus_talks)
 - [MLFinLab](https://github.com/hudson-and-thames/mlfinlab/)
+- [HyperTrade](https://github.com/karanpratapsingh/HyperTrade/)
 
 ---
 
