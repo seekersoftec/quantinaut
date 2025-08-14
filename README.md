@@ -20,7 +20,7 @@
 
 <!-- --- -->
 
-**Nautilus AI** — *An open-source, fully autonomous algorithmic trading engine integrating machine learning, quantitative analysis, and feature engineering to deliver adaptive, high-performance strategies in real-time markets.*
+**Nautilus AI** — *An open-source, fully autonomous algorithmic trading platform integrating machine learning, quantitative analysis, and feature engineering to deliver adaptive, high-performance strategies in real-time markets.*
 
 <!-- --- -->
 
