@@ -6,7 +6,7 @@
 <p align="center"><em>Breaking Alpha</em></p>
 
 <p align="center">
-  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.12%2B-blue" alt="Python"></a>
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.11%2B-blue" alt="Python"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License"></a>
   <a href="https://github.com/seekersoftec/nautilus_ai/actions"><img src="https://img.shields.io/github/actions/workflow/status/seekersoftec/nautilus_ai/tests.yml?branch=main" alt="Build Status"></a>
   <a href="https://github.com/seekersoftec/nautilus_ai/actions"><img src="https://img.shields.io/badge/Tests-Passing-brightgreen" alt="Tests"></a>
