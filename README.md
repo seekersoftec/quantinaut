@@ -48,17 +48,17 @@ Nautilus AI separates **where** different types of machine learning shine in a t
 
 This approach matches the right ML paradigm to the right problem, making your trading system both precise and context-aware.
 
-### 🔍 Indicator-Based ML
+### 🔍 Online learning
 ML models act as predictive indicators — like supercharged technical signals, trained on historical and live data.
 - **Purpose:** Generate buy/sell probabilities, price targets, volatility forecasts, and more.
 - **Integration:** Plug into strategies (RL or rule-based) for smarter decisions.
-- **Best for:** Online learning, adapting to new data as markets evolve.
+- **Best for:** Indicators, adapting to new data as markets evolve.
 
-### 🕹️ Strategy-Based ML
+### 🕹️ Offline learning
 Here, ML is the brain of your trading strategy, deciding when to enter, exit, or hold positions with a holistic view.
 - **Purpose:** Optimize trade execution and portfolio management.
 - **Integration:** Combine multiple inputs — indicators, order book data, market regimes, and more.
-- **Best for:** Offline learning (batch training) or deep RL, learning optimal policies from simulations or historical data.
+- **Best for:** Strategies (batch training) or deep RL, learning optimal policies from simulations or historical data.
 
 ---
 

@@ -1,7 +1,1 @@
-"""
-TODO:
-- Implement a Model interface for ML models.
-
-Non-RL models should follow river's API
-
-"""
+from nautilus_ai.models.model import OnlineModel, OfflineModel
