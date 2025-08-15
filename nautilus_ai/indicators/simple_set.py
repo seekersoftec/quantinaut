@@ -3,11 +3,9 @@ import pandas as pd
 from datetime import datetime
 from collections import deque
 from nautilus_trader.core.correctness import PyCondition
-from nautilus_trader.indicators.base.indicator import Indicator
 from nautilus_trader.model.data import Bar
-from nautilus_trader.model.data import QuoteTick
-from nautilus_trader.model.data import TradeTick
 from nautilus_trader.model.enums import PriceType
+from nautilus_trader.indicators.base.indicator import Indicator
 from nautilus_trader.indicators.atr import AverageTrueRange
 from nautilus_trader.indicators.vwap import VolumeWeightedAveragePrice
 from nautilus_ai.models import OnlineModel
@@ -45,38 +43,9 @@ class SimpleSet(Indicator):
         self.features: Feature = None    
         self.label: Label = None    
         self.model: OnlineModel = None 
+        self.metric = 0.0 
           
-        self.value = 0.0  
-
-    def handle_quote_tick(self, tick: QuoteTick):
-        """
-        Update the indicator with the given quote tick.
-
-        It extracts the price from the tick and adds it to the internal
-        rolling window.
-
-        Parameters
-        ----------
-        tick : QuoteTick
-            The update tick to handle.
-        """
-        PyCondition.not_none(tick, "tick")
-        self.update_raw(tick.extract_price(self.price_type).as_double())
-
-    def handle_trade_tick(self, tick: TradeTick):
-        """
-        Update the indicator with the given trade tick.
-
-        It extracts the price from the tick and adds it to the internal
-        rolling window.
-
-        Parameters
-        ----------
-        tick : TradeTick
-            The update tick to handle.
-        """
-        PyCondition.not_none(tick, "tick")
-        self.update_raw(tick.price.as_double())
+        self.value = 0.0 
         
     def handle_bar(self, bar: Bar):
         """
@@ -121,7 +90,7 @@ class SimpleSet(Indicator):
         if self.model is not None:
             # Assemble the features from the rolling window
             features = self.features.generate({"atr": self._atr.value, "vwap": self._vwap.value, "prices": list(self._prices)})
-            target = self.label.transform()
+            target = self.label.transform_one({"prices": list(self._prices)})
                 
             # Make a prediction with the current features
             self.value = self.model.predict_one(features)
@@ -129,28 +98,44 @@ class SimpleSet(Indicator):
             # If a target is provided, train the model with the new data point
             if target is not None:
                 self.model.learn_one(features, target)
-        
+
+            self.metric = self.model.metric
+            
         # For rolling approaches that require one output per fixed window.
         if self.process_batch:
             self._prices.clear() 
 
-    def set_model(self, model: OnlineModel):
+    def set_model(self, features: Feature, label: Label, model: OnlineModel):
         """
-        Set the machine learning model for this indicator to use.
+        Attach feature, label, and online model objects to the indicator for learning and inference.
 
-        This method is used to attach a pre-trained or new machine learning model
-        to the indicator. The model can then process the data collected in the
-        rolling window.
+        This method sets the feature extractor, label transformer, and online learning model
+        that will be used to process the rolling window of data. All three must be subclasses
+        of their respective base classes.
 
-        Parameters
-        ----------
-        model : OnlineModel
-            The machine learning model to be used.
+        Args:
+            features (Feature):
+                The feature extractor (must be a subclass of Feature).
+            label (Label):
+                The label transformer (must be a subclass of Label).
+            model (OnlineModel):
+                The online machine learning model (must be a subclass of OnlineModel).
         """
+        PyCondition.not_none(features, "features")
+        PyCondition.not_none(label, "label")
         PyCondition.not_none(model, "model")
+        
+        if not issubclass(features, Feature):
+            raise TypeError("Feature Model must be a subclass of Feature.")
+        
+        if not issubclass(label, Label):
+            raise TypeError("Label Model must be a subclass of Label.")
         
         if not issubclass(model, OnlineModel):
             raise TypeError("Model must be a subclass of OnlineModel.")
+        
+        self.features = features
+        self.label = label
         self.model = model
     
     def _reset(self):
@@ -158,6 +143,13 @@ class SimpleSet(Indicator):
         Resets the state of the indicator, clearing its rolling window and model.
         """
         self._prices.clear()
+        self._atr.reset()
+        self._vwap.reset()
+        
+        self.features = None
+        self.label = None
         self.model = None
+        self.metric = 0.0 
+        
         self.value = 0.0
         

@@ -5,34 +5,25 @@ from typing import Any, Dict, Optional
 
 class Feature(metaclass=ABCMeta):
     """
-    Base class for feature models.
+    Abstract base class for feature generators in Nautilus AI.
 
-    This class defines the interface for models compatible with the 
+    Subclasses should implement the `generate` method to produce features
+    from a given context (e.g., a sample or data point).
     """
 
     @abstractmethod
     def generate(self, ctx: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
-        Make a prediction for a single data point.
+        Extract and generate features using the given context, if provided.
 
         Parameters
         ----------
-        X : Dict[str, Any]
-            The input features for a single sample.
+            ctx (Optional[Dict[str, Any]]):
+                Input context for a single sample (e.g., raw data, signals).
 
         Returns
         -------
-        Any
-            The predicted value (e.g., float for regression, int for classification).
+            Dict[str, Any]:
+                A dictionary of generated features for the sample.
         """
         pass
-
-#   def _assemble_features(self) -> Dict[str, Any]:
-#         """
-#         Assemble features from the rolling window of prices into a dictionary.
-#         """
-#         features = {}
-#         for i, price in enumerate(self._prices):
-#             # Creates a dictionary like {'price_0': 100.1, 'price_1': 100.2, ...}
-#             features[f'price_{i}'] = price
-#         return features

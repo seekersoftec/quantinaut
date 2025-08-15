@@ -1,22 +1,17 @@
+# nautilus_ai/labels/raw_return.py
 """
-nautilus_ai/labeling/raw_return.py
-==================================
+============================
 Raw Returns Labeling Method
 
 Most basic form of labeling based on raw return of each observation relative to its previous value.
 """
 import numpy as np
 import pandas as pd
-from typing import Optional, Union
+from typing import Any, Dict, Optional, Union
+from nautilus_ai.labels.label import Label
 
 
-def raw_return(
-    prices: Union[pd.Series, pd.DataFrame],
-    binary: bool = False,
-    logarithmic: bool = False,
-    resample_by: Optional[str] = None,
-    lag: bool = True,
-) -> Union[pd.Series, pd.DataFrame]:
+class RawReturn(Label):
     """
     Raw returns labeling method.
 
@@ -46,25 +41,87 @@ def raw_return(
         Raw returns on market data. User can specify whether returns will be based on
         simple or logarithmic return, and whether the output will be numerical or categorical.
     """
-    # Apply resample, if applicable.
-    if resample_by is not None:
-        prices = prices.resample(resample_by).last()
+    def __init__(self, binary: bool = False, logarithmic: bool = False, resample_by: Optional[str] = None, lag: bool = True):
+        super().__init__() 
+        self.binary = binary
+        self.logarithmic = logarithmic
+        self.resample_by = resample_by
+        self.lag = lag
+        
+    def transform_one(self, X: Optional[Dict[str, Any]] = None) -> Union[int, float]:
+        """
+        Transform input features for a single sample into a label.
 
-    # Get return per period.
-    if logarithmic:  # Log returns
-        if lag:
-            returns = np.log(prices).diff().shift(-1)
-        else:
-            returns = np.log(prices).diff()
-    else:  # Simple returns
-        if lag:
-            returns = prices.pct_change(periods=1).shift(-1)
-        else:
-            returns = prices.pct_change(periods=1)
+        Parameters
+        ----------
+            X (Optional[Dict[str, Any]]):
+                Input features for one sample.
 
-    # Return sign only if categorical labels desired.
-    if binary:
-        returns = returns.apply(np.sign)
+        Returns:
+            Any:
+                The label value (e.g., int for classification, float for regression).
+                Returns 0 if no prediction is made.
+        """
+        prices = X.get("prices", []) if X is not None else []
+        prices = pd.Series(prices)
+        
+        # Apply resample, if applicable.
+        if self.resample_by is not None:
+            prices = prices.resample(self.resample_by).last()
 
-    return returns
+        # Get return per period.
+        if self.logarithmic:  # Log returns
+            if self.lag:
+                returns = np.log(prices).diff().shift(-1)
+            else:
+                returns = np.log(prices).diff()
+        else:  # Simple returns
+            if self.lag:
+                returns = prices.pct_change(periods=1).shift(-1)
+            else:
+                returns = prices.pct_change(periods=1)
 
+        # Return sign only if categorical labels desired.
+        if self.binary:
+            returns = returns.apply(np.sign)
+
+        return returns[-1] if not returns.empty else 0.0  # Return last value or 0 if empty
+
+    def transform_many(self, X: Optional[Dict[str, Any]] = None) -> pd.Series:
+        """
+        Transform input features for multiple samples into labels.
+
+        Parameters
+        ----------
+            X (Optional[Dict[str, Any]]):
+                Input features for multiple samples (batched or iterable).
+
+        Returns:
+            pd.Series:
+                The predicted label values (e.g., list or array for batch prediction).
+        """
+        prices = X.get("prices", []) if X is not None else []
+        prices = pd.Series(prices)
+
+        # Apply resample, if applicable.
+        if self.resample_by is not None:
+            prices = prices.resample(self.resample_by).last()
+
+        # Get return per period.
+        if self.logarithmic:  # Log returns
+            if self.lag:
+                returns = np.log(prices).diff().shift(-1)
+            else:
+                returns = np.log(prices).diff()
+        else:  # Simple returns
+            if self.lag:
+                returns = prices.pct_change(periods=1).shift(-1)
+            else:
+                returns = prices.pct_change(periods=1)
+
+        # Return sign only if categorical labels desired.
+        if self.binary:
+            returns = returns.apply(np.sign)
+
+        return returns
+    

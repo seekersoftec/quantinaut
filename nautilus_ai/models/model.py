@@ -13,6 +13,10 @@ class OnlineModel(metaclass=ABCMeta):
     This class defines the interface for models compatible with the River
     online learning paradigm, using incremental learning and prediction methods.
     """
+    
+    @property
+    def metric(self):
+        pass
 
     @abstractmethod
     def learn_one(self, X: Dict[str, Any], y: Union[float, int]) -> None:
