@@ -63,4 +63,10 @@ class WebChannel(Channel):
     - https://github.com/karanpratapsingh/HyperTrade/
 
     """
-    pass
+    
+    def __init__(self, config: WebChannelConfig):
+        super().__init__(config)
+        
+        self._server = None  # Placeholder for WebSocket server instance
+        self._loop = asyncio.get_event_loop()  # Event loop for async operations
+

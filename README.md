@@ -83,6 +83,7 @@ Ready to dive in? Check out the [docs](docs/README.md) or explore the `examples/
 - [FreqTrade](https://github.com/freqtrade/freqtrade/)
 - [VNpy](https://github.com/vnpy/vnpy.git)
 - [River (Online ML)](https://github.com/online-ml/river/)
+- [Mlfin.py](https://github.com/baobach/mlfinpy/)
 - [MLFinLab](https://github.com/hudson-and-thames/mlfinlab/)
 - [HyperTrade](https://github.com/karanpratapsingh/HyperTrade/)
 - [PML Trader](https://github.com/Martingale42/pml-trader)

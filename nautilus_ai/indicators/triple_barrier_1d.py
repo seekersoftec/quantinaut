@@ -155,15 +155,19 @@ class TripleBarrier1D(Indicator):
         int
             The generated label value, where -1 is a loss, 0 is no change, and 1 is a gain.
         """
+        if None in prices:
+            raise ValueError("Price data cannot contain None values.")
+            
         if not prices or len(prices) < self.period:
             return 0
-        current_price = prices[-1]
-        for prev_price in prices[:-1]:
-            diff = (current_price - prev_price) / prev_price
-            if diff >= self.upper:
-                return 1
-            elif diff <= self.lower:
-                return -1
+        
+        for i, price in enumerate(prices):
+            for j in range(len(prices) - 1, i, -1):
+                diff = (price - prices[j]) / prices[j] # is this in percentages?
+                if diff >= self.upper:
+                    return 1
+                elif diff <= self.lower:
+                    return -1
         return 0
     
     def get_model(self):
