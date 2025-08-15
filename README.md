@@ -8,7 +8,7 @@
 <p align="center">
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.11%2B-blue" alt="Python"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License"></a>
-  <a href="https://github.com/seekersoftec/nautilus_ai/actions"><img src="https://img.shields.io/github/actions/workflow/status/seekersoftec/nautilus_ai/tests.yml?branch=main" alt="Build Status"></a>
+  <a href="https://github.com/seekersoftec/nautilus_ai/actions"><img src="https://img.shields.io/github/actions/workflow/status/seekersoftec/nautilus_ai/build.yml?branch=main" alt="Build Status"></a>
   <a href="https://github.com/seekersoftec/nautilus_ai/actions"><img src="https://img.shields.io/badge/Tests-Passing-brightgreen" alt="Tests"></a>
   <a href="../../CONTRIBUTING.md"><img src="https://img.shields.io/badge/Contributions-Welcome-orange.svg" alt="Contributions"></a>
   <a href="https://github.com/psf/black"><img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Code Style"></a>
