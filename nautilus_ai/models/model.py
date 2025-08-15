@@ -15,7 +15,7 @@ class OnlineModel(metaclass=ABCMeta):
     """
 
     @abstractmethod
-    def learn_one(self, x: Dict[str, Any], y: Union[float, int]) -> None:
+    def learn_one(self, X: Dict[str, Any], y: Union[float, int]) -> None:
         """
         Learn from a single data point.
 
@@ -24,8 +24,8 @@ class OnlineModel(metaclass=ABCMeta):
 
         Parameters
         ----------
-        x : Dict[str, Any]
-            The input features for a single sample. River models expect a dictionary
+        X : Dict[str, Any]
+            The input features for a single sample, models expect a dictionary
             of feature names and their values.
         y : Union[float, int]
             The target variable for the single sample.
@@ -33,13 +33,13 @@ class OnlineModel(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def predict_one(self, x: Dict[str, Any]) -> Any:
+    def predict_one(self, X: Dict[str, Any]) -> Any:
         """
         Make a prediction for a single data point.
 
         Parameters
         ----------
-        x : Dict[str, Any]
+        X : Dict[str, Any]
             The input features for a single sample.
 
         Returns

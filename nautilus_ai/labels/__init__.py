@@ -4,3 +4,5 @@ Sources:
     - [Mlfin.py](https://github.com/baobach/mlfinpy/)
     - [MLFinLab](https://github.com/hudson-and-thames/mlfinlab/)
 """
+
+from nautilus_ai.labels.label import Label

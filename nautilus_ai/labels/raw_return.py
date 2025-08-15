@@ -10,7 +10,6 @@ import pandas as pd
 from typing import Optional, Union
 
 
-
 def raw_return(
     prices: Union[pd.Series, pd.DataFrame],
     binary: bool = False,

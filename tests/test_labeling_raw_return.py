@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from typing import Optional, Union
-from nautilus_ai.labeling.raw_return import raw_return
+from nautilus_ai.labels.raw_return import raw_return
 
 @pytest.fixture(scope="module")
 def stock_data():
