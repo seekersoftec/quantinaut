@@ -73,3 +73,26 @@ class LogisticRegressionModel(OnlineModel):
             optimizer=optim.SGD(0.05), l2=self.l2, l1=self.l1
         )
         self._model = multiclass.OneVsRestClassifier(base)
+
+    def save(self, path: str):
+        """
+        Save the model to the specified path using pickle.
+
+        Args:
+            path (str): Path to save the model.
+        """
+        import pickle
+        with open(path, "wb") as f:
+            pickle.dump(self._model, f)
+
+    def load(self, path: str):
+        """
+        Load the model from the specified path using pickle.
+
+        Args:
+            path (str): Path to load the model from.
+        """
+        import pickle
+        with open(path, "rb") as f:
+            self._model = pickle.load(f)
+            
