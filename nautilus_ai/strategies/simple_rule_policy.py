@@ -24,7 +24,7 @@ from nautilus_trader.indicators.rvi import RelativeVolatilityIndex
 
 from nautilus_ai.common import save_logs, TradingDecision, TradeSignal, Volatility
 from nautilus_ai.channels import ChannelData
-from nautilus_ai.indicators.simple_set import SimpleSet
+from nautilus_ai.indicators.atr_vwap import AverageTrueRangeWithVwap
 from nautilus_ai.models import LogisticRegressionModel
 
 np.random.seed(100)
@@ -67,11 +67,7 @@ class SimpleRulePolicyStrategy(Strategy):
         PyCondition.type(config.train_feature_sets, list, "train_feature_sets")
         PyCondition.type(config.train_features, list[str], "train_features")
         PyCondition.type(config.labels, list[str], "labels")
-        PyCondition.type(config.algorithms, list[AlgorithmConfig], "algorithms")
-        PyCondition.type(config.signal_sets, list[SignalSetConfig], "algorithms")
-        PyCondition.type(config.output_sets, list[OutputSetConfig], "algorithms")
-        PyCondition.type(config.rolling_predict, RollingPredictConfig, "rolling_predict")
-        
+
         super().__init__(config)
         
         self.model = None
@@ -93,8 +89,8 @@ class SimpleRulePolicyStrategy(Strategy):
         self.tick_size = None
         
         self.rvi = RelativeVolatilityIndex(config.rvi_period)
-        self.simple_set = SimpleSet(
-            period=config.simple_set_period,
+        self.atr_vwap = AverageTrueRangeWithVwap(
+            period=config.atr_vwap_period,
             price_type=config.bar_type.price_type,
             process_batch=config.process_batch
         )
@@ -112,6 +108,7 @@ class SimpleRulePolicyStrategy(Strategy):
         self.tick_size = self.instrument.price_increment
 
         self.register_indicator_for_bars(self.config.bar_type, self.rvi)
+        self.register_indicator_for_bars(self.config.bar_type, self.atr_vwap)
 
         # Get historical data
         self.request_bars(self.config.bar_type)
@@ -121,7 +118,7 @@ class SimpleRulePolicyStrategy(Strategy):
         self.subscribe_bars(self.config.bar_type) 
         self.subscribe_data(data_type=DataType(ChannelData))
         
-        self.simple_set.set_model(
+        self.atr_vwap.set_model(
             features=,
             label=,
             model=LogisticRegressionModel(

@@ -13,7 +13,7 @@ from nautilus_ai.features import Feature
 from nautilus_ai.labels import Label
 
 
-class SimpleSet(Indicator):
+class AverageTrueRangeWithVwap(Indicator):
     """
     A generic classification-based indicator.
 
