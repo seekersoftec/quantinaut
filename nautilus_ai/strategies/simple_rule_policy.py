@@ -24,12 +24,14 @@ from nautilus_trader.indicators.rvi import RelativeVolatilityIndex
 
 from nautilus_ai.common import save_logs, TradingDecision, TradeSignal, Volatility
 from nautilus_ai.channels import ChannelData
+from nautilus_ai.indicators.simple_set import SimpleSet
+from nautilus_ai.models import LogisticRegressionModel
 
 np.random.seed(100)
     
-class RulePolicyConfig(StrategyConfig, frozen=True):
+class SimpleRulePolicyConfig(StrategyConfig, frozen=True):
     """
-    Configuration for RulePolicy instances, tailored for rule-based ML models.
+    Configuration for SimpleRulePolicy instances, tailored for rule-based ML models.
 
     This configuration provides a robust set of parameters to define the behavior
     of a machine learning-based trading strategy. It covers model loading,
@@ -51,13 +53,13 @@ class RulePolicyConfig(StrategyConfig, frozen=True):
     scaler_path: Union[Path, str, None] = None
 
 
-class RulePolicyStrategy(Strategy):
+class SimpleRulePolicyStrategy(Strategy):
     """
         Intelligent Trading Strategy
         
         Uses offline approach.
     """
-    def __init__(self, config: RulePolicyConfig) -> None:
+    def __init__(self, config: SimpleRulePolicyConfig) -> None:
         PyCondition.type(config.data_folder, Path, "data_folder")
         PyCondition.type(config.data_sources, list, "data_sources")
         PyCondition.type(config.feature_sets, list, "feature_sets")
@@ -91,6 +93,11 @@ class RulePolicyStrategy(Strategy):
         self.tick_size = None
         
         self.rvi = RelativeVolatilityIndex(config.rvi_period)
+        self.simple_set = SimpleSet(
+            period=config.simple_set_period,
+            price_type=config.bar_type.price_type,
+            process_batch=config.process_batch
+        )
 
     def on_start(self) -> None:
         """
@@ -114,9 +121,18 @@ class RulePolicyStrategy(Strategy):
         self.subscribe_bars(self.config.bar_type) 
         self.subscribe_data(data_type=DataType(ChannelData))
         
+        self.simple_set.set_model(
+            features=,
+            label=,
+            model=LogisticRegressionModel(
+            l2=self.config.l2,
+            l1=self.config.l1
+        ))
+        
         if self.config.model_path:
             self.log.info("Loading pre-trained model.")
             self._load_model()
+            self.simple_set.model.load(self.config.model_path)
         
     def on_stop(self) -> None:
         """

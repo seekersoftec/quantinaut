@@ -41,7 +41,7 @@ class RawReturn(Label):
         Raw returns on market data. User can specify whether returns will be based on
         simple or logarithmic return, and whether the output will be numerical or categorical.
     """
-    def __init__(self, binary: bool = False, logarithmic: bool = False, resample_by: Optional[str] = None, lag: bool = True):
+    def __init__(self, binary: bool = False, logarithmic: bool = False, resample_by: Optional[str] = None, lag: bool = False):
         super().__init__() 
         self.binary = binary
         self.logarithmic = logarithmic
