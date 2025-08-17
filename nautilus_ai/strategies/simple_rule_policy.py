@@ -216,7 +216,7 @@ class SimpleRulePolicyStrategy(Strategy):
 
         # Execute trade and log
         self._trade(bar)
-        self._save_logs(bar, prediction=prediction, trade_signal=self._trade_signal.name)
+        self._save_logs(bar, prediction=self.atr_vwap.value, trade_signal=self._trade_signal.name)
     
     def _trade(self, bar: Bar, confidence: float = 0.50):
         side = OrderSide.BUY if "BUY" in self._trade_signal else OrderSide.SELL
