@@ -24,8 +24,10 @@ from nautilus_trader.indicators.rvi import RelativeVolatilityIndex
 
 from nautilus_ai.common import save_logs, TradingDecision, TradeSignal, Volatility
 from nautilus_ai.channels import ChannelData
+from nautilus_ai.features import Feature, F1
+from nautilus_ai.labels import Label, RawReturn
+from nautilus_ai.models import OnlineModel, LogisticRegressionModel
 from nautilus_ai.indicators.atr_vwap import AverageTrueRangeWithVwap
-from nautilus_ai.models import LogisticRegressionModel
 
 np.random.seed(100)
     
@@ -47,10 +49,14 @@ class SimpleRulePolicyConfig(StrategyConfig, frozen=True):
     """
     bar_type: BarType
     client_id: ClientId = ClientId("ITB-001")
-    data_folder: Path = Path("./DATA_ITB")
+    
+    features: Feature = F1()
+    label: Label = RawReturn()
+    model: OnlineModel = LogisticRegressionModel()
     model_path: Union[Path, str, None] = None
     scale_data: bool = False
     scaler_path: Union[Path, str, None] = None
+    data_folder: Path = Path("./DATA_ITB")
 
 
 class SimpleRulePolicyStrategy(Strategy):
@@ -60,44 +66,48 @@ class SimpleRulePolicyStrategy(Strategy):
         Uses offline approach.
     """
     def __init__(self, config: SimpleRulePolicyConfig) -> None:
-        PyCondition.type(config.data_folder, Path, "data_folder")
-        PyCondition.type(config.data_sources, list, "data_sources")
-        PyCondition.type(config.feature_sets, list, "feature_sets")
-        PyCondition.type(config.label_sets, list, "label_sets")
-        PyCondition.type(config.train_feature_sets, list, "train_feature_sets")
-        PyCondition.type(config.train_features, list[str], "train_features")
-        PyCondition.type(config.labels, list[str], "labels")
+        PyCondition.not_none(config, "config")
+        PyCondition.type(config, SimpleRulePolicyConfig, "config")
+        PyCondition.type(config.bar_type, BarType, "bar_type")
+        PyCondition.type(config.client_id, ClientId, "client_id")
+        PyCondition.type(config.features, Feature, "features")
+        PyCondition.type(config.label, Label, "label")
+        PyCondition.type(config.model, OnlineModel, "model")
+        # PyCondition.type(config.model_path, (Path, str, type(None)), "model_path")
+
 
         super().__init__(config)
-        
-        self.model = None
+
+        self.model = config.model
+        self.features = config.features
+        self.label = config.label
         self.scaler = None
         self._instruments: dict[Union[InstrumentId, str], BarType] = {}
         self._bar_history: dict[Union[InstrumentId, str], deque] = {}
         self._bars_since_retrain: int = 0
         self._is_warmed_up: bool = False
         self._enable_context: bool = False
-        
+
         self._notification_channel_id = None
         self._trade_signal = TradingDecision.NEUTRAL
         self._volatility = Volatility.NEUTRAL
-        
+
         self.instrument_id = self.config.bar_type.instrument_id
 
         # Initialized in on_start
-        self.instrument: Instrument | None = None
+        self.instrument: Optional[Instrument] = None
         self.tick_size = None
-        
-        self.rvi = RelativeVolatilityIndex(config.rvi_period)
+
+        self.rvi = RelativeVolatilityIndex(getattr(config, "rvi_period", 14))
         self.atr_vwap = AverageTrueRangeWithVwap(
-            period=config.atr_vwap_period,
+            period=getattr(config, "atr_vwap_period", 14),
             price_type=config.bar_type.price_type,
-            process_batch=config.process_batch
+            process_batch=getattr(config, "process_batch", False)
         )
 
     def on_start(self) -> None:
         """
-        Handles strategy startup logic.
+        Handles strategy startup logic: initializes instruments, indicators, and attaches ML model.
         """
         self.instrument = self.cache.instrument(self.instrument_id)
         if self.instrument is None:
@@ -115,21 +125,19 @@ class SimpleRulePolicyStrategy(Strategy):
 
         # Subscribe to live data
         self.subscribe_quote_ticks(self.instrument_id)
-        self.subscribe_bars(self.config.bar_type) 
+        self.subscribe_bars(self.config.bar_type)
         self.subscribe_data(data_type=DataType(ChannelData))
-        
+
+        # Attach feature, label, and model to indicator
         self.atr_vwap.set_model(
-            features=,
-            label=,
-            model=LogisticRegressionModel(
-            l2=self.config.l2,
-            l1=self.config.l1
-        ))
-        
+            features=self.features,
+            label=self.label,
+            model=self.model
+        )
+
         if self.config.model_path:
             self.log.info("Loading pre-trained model.")
             self._load_model()
-            self.simple_set.model.load(self.config.model_path)
         
     def on_stop(self) -> None:
         """
@@ -192,15 +200,23 @@ class SimpleRulePolicyStrategy(Strategy):
         
     def _decide(self, bar: Bar):
         """
-        Model Decision
+        Make a trading decision using the ML model and current indicator values.
+        Sets the trade signal and volatility, then triggers trade and logging actions.
         """
-        
-        # self._trade_signal = TradingDecision.ENTER_LONG if side == OrderSide.BUY else TradingDecision.ENTER_SHORT 
+        # Map prediction to trade signal (example logic)
+        if self.atr_vwap.value == 1:
+            self._trade_signal = TradingDecision.ENTER_LONG
+        elif self.atr_vwap.value == -1:
+            self._trade_signal = TradingDecision.ENTER_SHORT
+        else:
+            self._trade_signal = TradingDecision.NEUTRAL
 
-        # self._trade()
-        # self._send_notifications()
-        # self._save_logs()
-        pass
+        # Example volatility logic (can be customized)
+        self._volatility = Volatility.BULLISH if self.rvi.value > 0 else Volatility.BEARISH
+
+        # Execute trade and log
+        self._trade(bar)
+        self._save_logs(bar, prediction=prediction, trade_signal=self._trade_signal.name)
     
     def _trade(self, bar: Bar, confidence: float = 0.50):
         side = OrderSide.BUY if "BUY" in self._trade_signal else OrderSide.SELL
@@ -277,97 +293,3 @@ class SimpleRulePolicyStrategy(Strategy):
 
         # Save logs
         save_logs(data, "itb_logs.csv")
-
-    def _load_model(self):
-        """
-        Loads a model and a scaler (if configured) from file.
-        """
-        # Load the model
-        if self.config.model_path:
-            path = Path(self.config.model_path)
-            if not path.exists():
-                self.log.warning(f"Model file not found: {self.config.model_path}. Skipping model load.")
-                return # Exit if model path is given but file doesn't exist
-
-            ext = str(path).lower()
-            if ext.endswith(".joblib"):
-                try:
-                    import joblib
-                    self.model = joblib.load(path)
-                except ImportError:
-                    self.log.error("joblib is not installed. Please install with `pip install joblib`.")
-            elif ext.endswith((".h5", ".keras")):
-                try:
-                    from keras.models import load_model
-                    self.model = load_model(path)
-                except ImportError:
-                    self.log.error("Keras is not installed. Please install with `pip install keras`.")
-            elif ext.endswith(".pkl"):
-                with open(path, "rb") as f:
-                    self.model = pickle.load(f)
-            else:
-                self.log.error(f"Unsupported model format: {ext}")
-
-            if self.model is not None:
-                self.log.info(f"Model loaded from {self.config.model_path}", color=LogColor.GREEN)
-
-        # Load the scaler if configured
-        if self.config.scale_data:
-            if not self.config.scaler_path:
-                self.log.warning("`scale_data` is True but `scaler_path` is not provided. Cannot load scaler.")
-                return
-
-            scaler_path = Path(self.config.scaler_path)
-            if not scaler_path.exists():
-                self.log.warning(f"Scaler file not found: {self.config.scaler_path}. Skipping scaler load.")
-                return
-            
-            try:
-                import joblib
-                self.scaler = joblib.load(scaler_path)
-                self.log.info(f"Scaler loaded from {self.config.scaler_path}", color=LogColor.GREEN)
-            except ImportError:
-                self.log.error("joblib is not installed. Please install with `pip install joblib`.")
-            except Exception as e:
-                self.log.error(f"Failed to load scaler from {scaler_path}: {e}")
-
-
-    def _save_model(self):
-        """
-        Saves the model and scaler (if it exists) to their respective paths.
-        """
-        # Save the model
-        if self.model and self.config.model_path:
-            path = Path(self.config.model_path)
-            path.parent.mkdir(parents=True, exist_ok=True)
-            ext = str(path).lower()
-
-            try:
-                if ext.endswith(".joblib"):
-                    import joblib
-                    joblib.dump(self.model, path)
-                elif ext.endswith((".h5", ".keras")):
-                    self.model.save(path)
-                elif ext.endswith(".pkl"):
-                    with open(path, "wb") as f:
-                        pickle.dump(self.model, f)
-                else:
-                    self.log.error(f"Unsupported model format for saving: {ext}")
-                    return
-                self.log.info(f"Model saved to {self.config.model_path}", color=LogColor.GREEN)
-            except Exception as e:
-                self.log.error(f"Failed to save model to {path}: {e}")
-
-        # Save the scaler
-        if self.scaler and self.config.scaler_path:
-            scaler_path = Path(self.config.scaler_path)
-            scaler_path.parent.mkdir(parents=True, exist_ok=True)
-
-            try:
-                import joblib
-                joblib.dump(self.scaler, scaler_path)
-                self.log.info(f"Scaler saved to {self.config.scaler_path}", color=LogColor.GREEN)
-            except ImportError:
-                self.log.error("joblib is not installed. Please install with `pip install joblib`.")
-            except Exception as e:
-                self.log.error(f"Failed to save scaler to {scaler_path}: {e}")
