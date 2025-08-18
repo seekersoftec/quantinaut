@@ -11,3 +11,4 @@ TripleBarrierND:
 """
 
 from nautilus_ai.labels.label import Label
+from nautilus_ai.labels.raw_return import RawReturn

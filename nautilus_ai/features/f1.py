@@ -27,8 +27,8 @@ class F1(Feature):
 
         Returns:
             Dict[str, Any]:
-                Dictionary with keys 'atr', 'vwap', and 'price_i' for each price in the input list,
-                where 'price_i' is the log-transformed value of the i-th price.
+                Dictionary with keys 'atr', 'vwap', and 'last_log_ret',
+                where 'last_log_ret' is the log-transformed value of the i-th price.
         """
         features = {}
         if ctx is None:
@@ -36,9 +36,8 @@ class F1(Feature):
 
         features['atr'] = ctx.get("atr", np.nan)
         features['vwap'] = ctx.get("vwap", np.nan)
-
+        
         prices = ctx.get("prices", [])
         prices_log = np.log(np.array(prices) + 1e-10)  # Avoid log(0)
-        for i, price in enumerate(prices_log):
-            features[f'price_{i}'] = price
+        features['last_log_ret'] = np.log(prices_log[-1] / prices_log[-2]) if len(prices_log) > 1 else np.nan
         return features

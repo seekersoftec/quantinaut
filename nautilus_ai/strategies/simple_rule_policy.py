@@ -48,10 +48,10 @@ class SimpleRulePolicyConfig(StrategyConfig, frozen=True):
  
     """
     bar_type: BarType
-    client_id: ClientId = ClientId("ITB-001")
+    client_id: ClientId = ClientId("SRP-001")
     
     features: Feature = F1()
-    label: Label = RawReturn()
+    label: Label = RawReturn(logarithmic=True, binary=True, lag=True)
     model: OnlineModel = LogisticRegressionModel()
     model_path: Union[Path, str, None] = None
     scale_data: bool = False
