@@ -62,29 +62,7 @@ class RawReturn(Label):
                 The label value (e.g., int for classification, float for regression).
                 Returns 0 if no prediction is made.
         """
-        prices = X.get("prices", []) if X is not None else []
-        prices = pd.Series(prices)
-        
-        # Apply resample, if applicable.
-        if self.resample_by is not None:
-            prices = prices.resample(self.resample_by).last()
-
-        # Get return per period.
-        if self.logarithmic:  # Log returns
-            if self.lag:
-                returns = np.log(prices).diff().shift(-1)
-            else:
-                returns = np.log(prices).diff()
-        else:  # Simple returns
-            if self.lag:
-                returns = prices.pct_change(periods=1).shift(-1)
-            else:
-                returns = prices.pct_change(periods=1)
-
-        # Return sign only if categorical labels desired.
-        if self.binary:
-            returns = returns.apply(np.sign)
-
+        returns = self.transform_many(X)
         return returns[-1] if not returns.empty else 0.0  # Return last value or 0 if empty
 
     def transform_many(self, X: Optional[Dict[str, Any]] = None) -> pd.Series:

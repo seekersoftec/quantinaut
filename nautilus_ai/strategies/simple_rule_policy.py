@@ -59,7 +59,7 @@ class SimpleRulePolicyConfig(StrategyConfig, frozen=True):
     data_folder: Path = Path("./DATA_ITB")
 
 
-class SimpleRulePolicyStrategy(Strategy):
+class SimpleRulePolicy(Strategy):
     """
         Intelligent Trading Strategy
         

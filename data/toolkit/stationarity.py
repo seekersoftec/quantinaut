@@ -10,10 +10,10 @@ from statsmodels.tsa.stattools import adfuller
 from scipy.stats import boxcox
 
 
-class StationarityToolkit:
+class Stationarity:
     def __init__(self, alpha, timeseries=None):
         """
-        Constructor for the StationarityToolkit class.
+        Constructor for the Stationarity class.
 
         Parameters:
             alpha (float): The significance level for hypothesis testing. A value between 0 and 1.
