@@ -1,4 +1,3 @@
-from collections import deque
 from pathlib import Path
 from typing import Optional, Union
 import pandas as pd
@@ -11,7 +10,7 @@ from nautilus_trader.config import PositiveInt, PositiveFloat
 from nautilus_trader.config import StrategyConfig
 from nautilus_trader.model.data import Bar, BarType, DataType
 from nautilus_trader.model.instruments import Instrument
-from nautilus_trader.model.identifiers import InstrumentId, ClientId
+from nautilus_trader.model.identifiers import ClientId
 from nautilus_trader.model.enums import OrderSide, TimeInForce, OrderType
 
 from nautilus_trader.config import StrategyConfig
@@ -42,25 +41,41 @@ class SimpleRulePolicyConfig(StrategyConfig, frozen=True):
         BarType object representing the instrument and it's timeframe.
     client_id : ClientId
         The client ID for the strategy, used for logging and identification.
- 
      rvi_period : PositiveInt, default=9
         Period for RVI indicator.
-        
-            rvi_threshold : PositiveFloat, default=55.0
-        Threshold for RVI filter (unused currently).
+    rvi_threshold : PositiveFloat, default=55.0
+        Threshold for RVI filter
+    atr_vwap_period : PositiveInt, default=14
+        Period for ATR-VWAP indicator.
+    atr_vwap_batch_bars : bool, default=True
+        Whether to use batch bars for ATR-VWAP.
+    features : Feature
+        Feature engineering configuration for the strategy.
+    label : Label
+        Labeling method for the strategy.
+    model : OnlineModel
+        Online learning model for the strategy.
+    model_path : Union[Path, str, None], default=None
+        Path to load the pre-trained model from.
+    scale_data : bool, default=False
+        Whether to scale the data before training.
+    scaler_path : Union[Path, str, None], default=None
+        Path to load the scaler from.
     """
     bar_type: BarType
     client_id: ClientId = ClientId("SRP-001")
     
     rvi_period: PositiveInt = 9
     rvi_threshold: PositiveFloat = 50.0
+    atr_vwap_period: PositiveInt = 14
+    atr_vwap_batch_bars: bool = True  # Whether to use batch bars for ATR-VWAP
     features: Feature = F1()
     label: Label = RawReturn(logarithmic=True, binary=True)
     model: OnlineModel = LogisticRegressionModel()
-    model_path: Union[Path, str, None] = None
+    model_path: Path = Path("./data/models/atr_vwap_model.pkl")
     scale_data: bool = False
     scaler_path: Union[Path, str, None] = None
-    data_folder: Path = Path("./DATA_ITB")
+    # data_folder: Path = Path("./DATA_ITB")
 
 
 class SimpleRulePolicy(Strategy):
@@ -74,6 +89,9 @@ class SimpleRulePolicy(Strategy):
         PyCondition.type(config, SimpleRulePolicyConfig, "config")
         PyCondition.type(config.bar_type, BarType, "bar_type")
         PyCondition.type(config.client_id, ClientId, "client_id")
+        PyCondition.positive_int(config.rvi_period, "rvi_period")
+        PyCondition.positive(config.rvi_threshold, "rvi_threshold")
+        
         PyCondition.type(config.features, Feature, "features")
         PyCondition.type(config.label, Label, "label")
         PyCondition.type(config.model, OnlineModel, "model")
@@ -92,8 +110,8 @@ class SimpleRulePolicy(Strategy):
 
         self.rvi = RelativeVolatilityIndex(config.rvi_period)
         self.atr_vwap = AverageTrueRangeWithVwap(
-            period=getattr(config, "atr_vwap_period", 14),
-            batch_bars=getattr(config, "batch_bars", False)
+            period=config.atr_vwap_period,
+            batch_bars=config.atr_vwap_batch_bars
         )
 
     def on_start(self) -> None:
@@ -125,10 +143,6 @@ class SimpleRulePolicy(Strategy):
         self.subscribe_quote_ticks(self.instrument_id)
         self.subscribe_bars(self.config.bar_type)
         self.subscribe_data(data_type=DataType(ChannelData))
-
-        # if self.config.model_path:
-        #     self.log.info("Loading pre-trained model.")
-        #     self._load_model()
         
     def on_stop(self) -> None:
         """
@@ -153,13 +167,13 @@ class SimpleRulePolicy(Strategy):
         """
         Loads the model and scaler when the strategy state is loaded.
         """
-        self.atr_vwap.model.load(self.config.data_folder / "atr_vwap_model.pkl")
+        self.atr_vwap.model.load(self.config.model_path)
     
     def on_save(self) -> None:
         """
         Saves the model and scaler when the strategy state is saved.
         """
-        self.atr_vwap.model.save(self.config.data_folder / "atr_vwap_model.pkl")
+        self.atr_vwap.model.save(self.config.model_path)
     
     def on_data(self, data: Data) -> None:
         """

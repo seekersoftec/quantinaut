@@ -55,7 +55,7 @@ class OnlineModel(metaclass=ABCMeta):
         """
         pass
 
-    def save(self, path: str):
+    def save(self, path: Union[str, Path]):
         """
         Save the model to the specified path.
 
@@ -68,7 +68,7 @@ class OnlineModel(metaclass=ABCMeta):
         # serialization method provided by the specific River model.
         pass
 
-    def load(self, path: str):
+    def load(self, path: Union[str, Path]):
         """
         Load the model from the specified path.
 

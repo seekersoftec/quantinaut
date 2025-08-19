@@ -108,7 +108,7 @@ if __name__ == "__main__":
     # Add data
     # file_path = "../data/mt5/DXYm_H4_202001020000_202508012000.csv"
     file_path = "../data/mt5/audusd_15min_klines.csv.parquet"
-    start_date = "2023-01-01 00:00:00"
+    start_date = "2024-01-01 00:00:00"
     end_date = "2024-12-31 23:59:59"
 
     if ".parquet" in file_path:

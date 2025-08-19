@@ -1,4 +1,5 @@
 from collections import deque
+from pathlib import Path
 from typing import Dict, Union
 from pyparsing import Any
 from river import compose, linear_model, preprocessing, metrics
@@ -74,7 +75,7 @@ class LogisticRegressionModel(OnlineModel):
         )
         self._model = multiclass.OneVsRestClassifier(base)
 
-    def save(self, path: str):
+    def save(self, path: Union[str, Path]):
         """
         Save the model to the specified path using pickle.
 
@@ -85,7 +86,7 @@ class LogisticRegressionModel(OnlineModel):
         with open(path, "wb") as f:
             pickle.dump(self._model, f)
 
-    def load(self, path: str):
+    def load(self, path: Union[str, Path]):
         """
         Load the model from the specified path using pickle.
 
