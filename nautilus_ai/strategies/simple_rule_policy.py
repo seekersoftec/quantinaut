@@ -71,10 +71,6 @@ class SimpleRulePolicy(Strategy):
 
         super().__init__(config)
 
-        self.model = config.model
-        self.features = config.features
-        self.label = config.label
-
         self._notification_channel_id = None
         self._trade_signal = TradingDecision.NEUTRAL
         self._volatility = Volatility.NEUTRAL
@@ -88,7 +84,6 @@ class SimpleRulePolicy(Strategy):
         self.rvi = RelativeVolatilityIndex(getattr(config, "rvi_period", 14))
         self.atr_vwap = AverageTrueRangeWithVwap(
             period=getattr(config, "atr_vwap_period", 14),
-            price_type=config.bar_type.price_type,
             process_batch=getattr(config, "process_batch", False)
         )
 
@@ -96,6 +91,13 @@ class SimpleRulePolicy(Strategy):
         """
         Handles strategy startup logic: initializes instruments, indicators, and attaches ML model.
         """
+        # Attach feature, label, and model to indicator
+        self.atr_vwap.set_model(
+            features=self.config.features,
+            label=self.config.label,
+            model=self.config.model
+        )
+        
         self.instrument = self.cache.instrument(self.instrument_id)
         if self.instrument is None:
             self.log.error(f"Could not find instrument for {self.instrument_id}")
@@ -115,16 +117,9 @@ class SimpleRulePolicy(Strategy):
         self.subscribe_bars(self.config.bar_type)
         self.subscribe_data(data_type=DataType(ChannelData))
 
-        # Attach feature, label, and model to indicator
-        self.atr_vwap.set_model(
-            features=self.features,
-            label=self.label,
-            model=self.model
-        )
-
-        if self.config.model_path:
-            self.log.info("Loading pre-trained model.")
-            self._load_model()
+        # if self.config.model_path:
+        #     self.log.info("Loading pre-trained model.")
+        #     self._load_model()
         
     def on_stop(self) -> None:
         """

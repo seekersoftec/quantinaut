@@ -125,13 +125,13 @@ class AverageTrueRangeWithVwap(Indicator):
         PyCondition.not_none(label, "label")
         PyCondition.not_none(model, "model")
         
-        if not issubclass(features, Feature):
+        if not isinstance(features, Feature) or not issubclass(features.__class__, Feature):
             raise TypeError("Feature Model must be a subclass of Feature.")
         
-        if not issubclass(label, Label):
+        if not isinstance(label, Label) or not issubclass(label.__class__, Label):
             raise TypeError("Label Model must be a subclass of Label.")
         
-        if not issubclass(model, OnlineModel):
+        if not isinstance(model, OnlineModel) or not issubclass(model.__class__, OnlineModel):
             raise TypeError("Model must be a subclass of OnlineModel.")
         
         self.features = features

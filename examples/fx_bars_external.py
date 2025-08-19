@@ -97,7 +97,7 @@ if __name__ == "__main__":
     AUDUSD = TestInstrumentProvider.audusd_cfd()
     engine.add_instrument(AUDUSD)
 
-    bar_type = BarType.from_str("AUD/USD.OANDA-15-MINUTE-LAST-EXTERNAL")
+    bar_type = BarType.from_str("AUDUSD.OANDA-15-MINUTE-LAST-EXTERNAL")
     
     # Set up wranglers
     wrangler = BarDataWrangler(
@@ -108,6 +108,8 @@ if __name__ == "__main__":
     # Add data
     # file_path = "../data/mt5/DXYm_H4_202001020000_202508012000.csv"
     file_path = "../data/mt5/audusd_15min_klines.csv.parquet"
+    start_date = "2023-01-01 00:00:00"
+    end_date = "2024-12-31 23:59:59"
 
     if ".parquet" in file_path:
         bars_df = pd.read_parquet(file_path)
@@ -131,8 +133,9 @@ if __name__ == "__main__":
 
     bars_df["timestamp"] = pd.to_datetime(bars_df["timestamp"])
     bars_df.set_index("timestamp", inplace=True)
-    bars = wrangler.process(bars_df[:10_000], default_volume=0.0, ts_init_delta=0)
-
+    # Filter data within the specified date range
+    bars_df = bars_df.loc[start_date:end_date] if isinstance(start_date, str) and isinstance(end_date, str) else bars_df
+    bars = wrangler.process(bars_df, default_volume=0.0, ts_init_delta=0)
     # Process the DataFrame into bar data
     engine.add_data(bars)
 
