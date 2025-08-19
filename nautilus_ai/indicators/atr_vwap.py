@@ -28,13 +28,13 @@ class AverageTrueRangeWithVwap(Indicator):
         process_batch: bool
             For rolling approaches that require one output per window. for the number of bars processed in the current batch
     """
-    def __init__(self, period: int, price_type: PriceType = PriceType.LAST, process_batch: bool = False):
+    def __init__(self, period: int, price_type: PriceType = PriceType.LAST, batch_bars: bool = False):
         PyCondition.positive_int(period, "period")
 
         super().__init__(params=[period])
         self.period = period
         self.price_type = price_type
-        self.process_batch = process_batch # use to clear the prices after it has been used 
+        self.batch_bars = batch_bars # use to clear the prices after it has been used 
         
         self._prices = deque(maxlen=period)
         self._atr = AverageTrueRange(period)
@@ -44,7 +44,9 @@ class AverageTrueRangeWithVwap(Indicator):
         self.label: Label = None    
         self.model: OnlineModel = None 
         self.metric = 0.0 
-          
+        
+        self.atr = 0.0
+        self.vwap = 0.0
         self.value = 0.0 
         
     def handle_bar(self, bar: Bar):
@@ -87,6 +89,8 @@ class AverageTrueRangeWithVwap(Indicator):
                 return
             self._set_initialized(True)
         
+        self.atr = self._atr.value
+        self.vwap = self._vwap.value
         if self.model is not None:
             # Assemble the features from the rolling window
             features = self.features.generate({"atr": self._atr.value, "vwap": self._vwap.value, "prices": list(self._prices)})
@@ -102,7 +106,7 @@ class AverageTrueRangeWithVwap(Indicator):
             self.metric = self.model.metric
             
         # For rolling approaches that require one output per fixed window.
-        if self.process_batch:
+        if self.batch_bars:
             self._prices.clear() 
 
     def set_model(self, features: Feature, label: Label, model: OnlineModel):
@@ -151,5 +155,7 @@ class AverageTrueRangeWithVwap(Indicator):
         self.model = None
         self.metric = 0.0 
         
+        self.atr = 0.0
+        self.vwap = 0.0
         self.value = 0.0
         

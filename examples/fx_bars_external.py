@@ -88,7 +88,7 @@ if __name__ == "__main__":
         base_currency=USD,  # Standard single-currency account
         starting_balances=[Money(10_000, USD)],  # Single-currency or multi-currency accounts
         fill_model=fill_model,
-        bar_execution=True,  # If bar data should move the market (True by default)
+        # bar_execution=True,  # If bar data should move the market (True by default)
         trade_execution=True,
         default_leverage=Decimal(25),
     )
@@ -139,22 +139,27 @@ if __name__ == "__main__":
     # Process the DataFrame into bar data
     engine.add_data(bars)
 
-    # Configure your strategy
-    # config = EMACrossBracketConfig(
-    #     instrument_id=EURUSD.id,
-    #     bar_type=bar_type,
-    #     fast_ema_period=10,
-    #     slow_ema_period=20,
-    #     bracket_distance_atr=3.0,
-    #     trade_size=Decimal(1_000),
-    # )
-    config = SimpleRulePolicyConfig(
+    # Configure your strategies
+    ema_config = EMACrossBracketConfig(
+        instrument_id=AUDUSD.id,
         bar_type=bar_type,
+        fast_ema_period=10,
+        slow_ema_period=20,
+        bracket_distance_atr=3.0,
+        trade_size=Decimal(1_000),
+    )
+    srp_config = SimpleRulePolicyConfig(
+        bar_type=bar_type,
+        rvi_period=9, # 9, 10, 21
+        rvi_threshold=60, # 60
     )
     # Instantiate and add your strategy
-    # strategy = EMACrossBracket(config=config)
-    strategy = SimpleRulePolicy(config=config)
-    engine.add_strategy(strategy=strategy)
+    strategies = [
+        configure_risk_engine(),
+        # EMACrossBracket(config=ema_config), 
+        SimpleRulePolicy(config=srp_config),
+    ]
+    engine.add_strategies(strategies=strategies)
 
     time.sleep(0.1)
     input("Press Enter to continue...")

@@ -41,7 +41,7 @@ class RawReturn(Label):
         Raw returns on market data. User can specify whether returns will be based on
         simple or logarithmic return, and whether the output will be numerical or categorical.
     """
-    def __init__(self, binary: bool = False, logarithmic: bool = False, resample_by: Optional[str] = None, lag: bool = True):
+    def __init__(self, binary: bool = False, logarithmic: bool = False, resample_by: Optional[str] = None, lag: bool = False):
         super().__init__() 
         self.binary = binary
         self.logarithmic = logarithmic
@@ -63,7 +63,7 @@ class RawReturn(Label):
                 Returns 0 if no prediction is made.
         """
         returns = self.transform_many(X)
-        return returns[-1] if not returns.empty else 0.0  # Return last value or 0 if empty
+        return returns.iloc[-1] if not returns.empty else 0.0  # Return last value or 0 if empty
 
     def transform_many(self, X: Optional[Dict[str, Any]] = None) -> pd.Series:
         """

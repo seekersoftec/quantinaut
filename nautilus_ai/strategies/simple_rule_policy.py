@@ -7,6 +7,7 @@ import numpy as np
 from nautilus_trader.core.data import Data
 from nautilus_trader.core.correctness import PyCondition
 from nautilus_trader.common.enums import LogColor
+from nautilus_trader.config import PositiveInt, PositiveFloat
 from nautilus_trader.config import StrategyConfig
 from nautilus_trader.model.data import Bar, BarType, DataType
 from nautilus_trader.model.instruments import Instrument
@@ -17,7 +18,8 @@ from nautilus_trader.config import StrategyConfig
 from nautilus_trader.trading.strategy import Strategy
 from nautilus_trader.indicators.rvi import RelativeVolatilityIndex
 
-from nautilus_ai.common import save_logs, TradingDecision, TradeSignal, Volatility
+from nautilus_ai.common import save_logs, trading_decision_to_order_side
+from nautilus_ai.common import TradingDecision, TradeSignal, Volatility
 from nautilus_ai.channels import ChannelData
 from nautilus_ai.features import Feature, F1
 from nautilus_ai.labels import Label, RawReturn
@@ -41,12 +43,19 @@ class SimpleRulePolicyConfig(StrategyConfig, frozen=True):
     client_id : ClientId
         The client ID for the strategy, used for logging and identification.
  
+     rvi_period : PositiveInt, default=9
+        Period for RVI indicator.
+        
+            rvi_threshold : PositiveFloat, default=55.0
+        Threshold for RVI filter (unused currently).
     """
     bar_type: BarType
     client_id: ClientId = ClientId("SRP-001")
     
+    rvi_period: PositiveInt = 9
+    rvi_threshold: PositiveFloat = 50.0
     features: Feature = F1()
-    label: Label = RawReturn(logarithmic=True, binary=True, lag=True)
+    label: Label = RawReturn(logarithmic=True, binary=True)
     model: OnlineModel = LogisticRegressionModel()
     model_path: Union[Path, str, None] = None
     scale_data: bool = False
@@ -81,10 +90,10 @@ class SimpleRulePolicy(Strategy):
         self.instrument: Optional[Instrument] = None
         self.tick_size = None
 
-        self.rvi = RelativeVolatilityIndex(getattr(config, "rvi_period", 14))
+        self.rvi = RelativeVolatilityIndex(config.rvi_period)
         self.atr_vwap = AverageTrueRangeWithVwap(
             period=getattr(config, "atr_vwap_period", 14),
-            process_batch=getattr(config, "process_batch", False)
+            batch_bars=getattr(config, "batch_bars", False)
         )
 
     def on_start(self) -> None:
@@ -194,17 +203,25 @@ class SimpleRulePolicy(Strategy):
         else:
             self._trade_signal = TradingDecision.NEUTRAL
 
+        confidence = self.atr_vwap.metric 
+        if confidence is None:
+            raise ValueError("ATR-VWAP metric is None, cannot proceed with trading decision.")
+
         # Example volatility logic (can be customized)
-        self._volatility = Volatility.BULLISH if self.rvi.value > 0 else Volatility.BEARISH
+        # TODO: try consistent increase or decrease as another approach AND check for divergence too 
+        self._volatility = Volatility.NEUTRAL 
+        if self.rvi.value > self.config.rvi_threshold:
+            self._volatility = Volatility.BULLISH   
+        elif self.rvi.value < (100 - self.config.rvi_threshold):
+            self._volatility = Volatility.BEARISH
 
         # Execute trade and log
-        self._trade(bar)
-        self._save_logs(bar, prediction=self.atr_vwap.value, trade_signal=self._trade_signal.name)
+        self._trade(bar, confidence)
+        self._save_logs(bar, prediction=self.atr_vwap.value, confidence=confidence, trade_signal=self._trade_signal.name)
     
     def _trade(self, bar: Bar, confidence: float = 0.50):
-        side = OrderSide.BUY if "BUY" in self._trade_signal else OrderSide.SELL
-
-        self.log.info(f"Trade signal: {self._trade_signal}. Placing {side} order.")
+        side = trading_decision_to_order_side(self._trade_signal)
+        self.log.info(f"Trade signal: {self._trade_signal.name}. Placing {side.name} order.")
 
         # --- Determine if RVI filter passes ---
         rvi_ok = True if (side == OrderSide.BUY and self._volatility == Volatility.BULLISH) or \
@@ -212,7 +229,7 @@ class SimpleRulePolicy(Strategy):
 
         if not rvi_ok:
             self.log.info(
-                f"Skipping {self._trade_signal} due to insufficient {Volatility.BULLISH if side == OrderSide.BUY else Volatility.BEARISH} volatility: {self.rvi.value:.2f}",
+                f"Skipping {self._trade_signal.name} due to insufficient {Volatility.BULLISH if side == OrderSide.BUY else Volatility.BEARISH} volatility: {self.rvi.value:.2f}",
                 color=LogColor.YELLOW,
             )
             return
@@ -220,7 +237,7 @@ class SimpleRulePolicy(Strategy):
         # --- Entry Logic by Signal Type ---
         if self._trade_signal != TradingDecision.NEUTRAL:
             self._send_trade(self._trade_signal, entry=bar, order_side=side, confidence=confidence, 
-                             entry_order_type=OrderType.MARKET, use_trailing_stop=True, atr=self.atr.value)
+                             entry_order_type=OrderType.MARKET, use_trailing_stop=True, atr=self.atr_vwap.atr)
         else:
             # Catch-all log for unexpected or unmapped signals
             self.log.info(
@@ -275,4 +292,4 @@ class SimpleRulePolicy(Strategy):
         }
 
         # Save logs
-        save_logs(data, "itb_logs.csv")
+        save_logs(data, "rule_policy_logs.csv")

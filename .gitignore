@@ -93,3 +93,4 @@ terraform.rc
 # Logs
 *.log
 detected_patterns/
+*_logs.csv

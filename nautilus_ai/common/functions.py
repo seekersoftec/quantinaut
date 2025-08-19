@@ -1,14 +1,42 @@
 import configparser
 import os
 import numpy as np
-import polars as pl
+import pandas as pd
 import yaml
 import json
 import toml
 from pathlib import Path
 from typing import Dict, Any, Union
+from nautilus_trader.model.enums import OrderSide
+from nautilus_ai.common.enums import TradingDecision
 
+def trading_decision_to_order_side(decision: TradingDecision) -> OrderSide:
+    """
+    Convert a TradingDecision enum to an OrderSide enum.
 
+    Parameters
+    ----------
+    decision : TradingDecision
+        The trading decision to convert.
+
+    Returns
+    -------
+    OrderSide
+        The corresponding order side.
+    """
+    # Entries
+    if decision == TradingDecision.ENTER_LONG:
+        return OrderSide.BUY
+    elif decision == TradingDecision.ENTER_SHORT:
+        return OrderSide.SELL
+    # Exits
+    elif decision == TradingDecision.EXIT_LONG:
+        return OrderSide.SELL
+    elif decision == TradingDecision.EXIT_SHORT:
+        return OrderSide.BUY
+    else:
+        # raise ValueError(f"Invalid trading decision: {decision}")
+        return OrderSide.NO_ORDER_SIDE
 
 def handle_config(path: Union[str, Path], mode="load", data=None):
     """
@@ -107,18 +135,18 @@ def handle_config(path: Union[str, Path], mode="load", data=None):
 
 def save_logs(data: Dict[str, Any], logs_file: str = "logs.csv"):
     """
-    Save logs to a CSV file for analysis using Polars.
+    Save logs to a CSV file for analysis using pandas.
 
     Parameters
     ----------
     data : Dict[str, Any]
         A dictionary containing the logs to save.
     logs_file : str
-        The file path where logs will be saved. Defaults to "logs_log.csv".
+        The file path where logs will be saved. Defaults to "logs.csv".
     """
-    df = pl.DataFrame(data)
+    df = pd.DataFrame(data)
 
     if not Path(logs_file).exists():
-        df.write_csv(logs_file)
+        df.to_csv(logs_file, index=False)
     else:
-        df.write_csv(logs_file, append=True, include_header=False)
+        df.to_csv(logs_file, mode="a", header=False, index=False)

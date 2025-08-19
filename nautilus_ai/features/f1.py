@@ -38,6 +38,6 @@ class F1(Feature):
         features['vwap'] = ctx.get("vwap", np.nan)
         
         prices = ctx.get("prices", [])
-        prices_log = np.log(np.array(prices) + 1e-10)  # Avoid log(0)
-        features['last_log_ret'] = np.log(prices_log[-1] / prices_log[-2]) if len(prices_log) > 1 else np.nan
+        # prices_log = np.log(np.array(prices) + 1e-10)  # Avoid log(0)
+        features['last_log_ret'] = float(np.log(prices[-1] / prices[-2])) if len(prices) > 1 else np.nan
         return features

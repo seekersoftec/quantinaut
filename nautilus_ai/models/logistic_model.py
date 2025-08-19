@@ -33,7 +33,7 @@ class LogisticRegressionModel(OnlineModel):
         """
         Returns the current evaluation metric (Macro F1).
         """
-        return self._metric
+        return self._metric.get()
 
     def learn_one(self, X: Dict[str, Any], y: Union[float, int]) -> None:
         """
