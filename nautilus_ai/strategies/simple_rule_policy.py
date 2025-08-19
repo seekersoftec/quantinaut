@@ -1,22 +1,17 @@
 from collections import deque
-from datetime import datetime, timedelta
-from decimal import ROUND_DOWN, Decimal
-import hashlib
-import pickle
 from pathlib import Path
-from typing import List, Optional, Union, Literal
+from typing import Optional, Union
 import pandas as pd
 import numpy as np
 
 from nautilus_trader.core.data import Data
 from nautilus_trader.core.correctness import PyCondition
 from nautilus_trader.common.enums import LogColor
-from nautilus_trader.config import PositiveFloat, PositiveInt, NonNegativeFloat
 from nautilus_trader.config import StrategyConfig
 from nautilus_trader.model.data import Bar, BarType, DataType
 from nautilus_trader.model.instruments import Instrument
 from nautilus_trader.model.identifiers import InstrumentId, ClientId
-from nautilus_trader.model.enums import OrderSide, TimeInForce, TrailingOffsetType, OrderType, TriggerType
+from nautilus_trader.model.enums import OrderSide, TimeInForce, OrderType
 
 from nautilus_trader.config import StrategyConfig
 from nautilus_trader.trading.strategy import Strategy
@@ -63,7 +58,7 @@ class SimpleRulePolicy(Strategy):
     """
         Intelligent Trading Strategy
         
-        Uses offline approach.
+        Uses online approach.
     """
     def __init__(self, config: SimpleRulePolicyConfig) -> None:
         PyCondition.not_none(config, "config")
@@ -73,20 +68,12 @@ class SimpleRulePolicy(Strategy):
         PyCondition.type(config.features, Feature, "features")
         PyCondition.type(config.label, Label, "label")
         PyCondition.type(config.model, OnlineModel, "model")
-        # PyCondition.type(config.model_path, (Path, str, type(None)), "model_path")
-
 
         super().__init__(config)
 
         self.model = config.model
         self.features = config.features
         self.label = config.label
-        self.scaler = None
-        self._instruments: dict[Union[InstrumentId, str], BarType] = {}
-        self._bar_history: dict[Union[InstrumentId, str], deque] = {}
-        self._bars_since_retrain: int = 0
-        self._is_warmed_up: bool = False
-        self._enable_context: bool = False
 
         self._notification_channel_id = None
         self._trade_signal = TradingDecision.NEUTRAL
@@ -156,18 +143,19 @@ class SimpleRulePolicy(Strategy):
         Actions to be performed when the strategy is reset.
         """
         self.rvi.reset()
+        self.atr_vwap.reset()
     
     def on_load(self) -> None:
         """
         Loads the model and scaler when the strategy state is loaded.
         """
-        self._load_model()
+        self.atr_vwap.model.load(self.config.data_folder / "atr_vwap_model.pkl")
     
     def on_save(self) -> None:
         """
         Saves the model and scaler when the strategy state is saved.
         """
-        self._save_model()
+        self.atr_vwap.model.save(self.config.data_folder / "atr_vwap_model.pkl")
     
     def on_data(self, data: Data) -> None:
         """

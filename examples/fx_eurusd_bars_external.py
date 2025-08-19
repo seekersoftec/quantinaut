@@ -35,10 +35,28 @@ from nautilus_trader.model.identifiers import Venue
 from nautilus_trader.model.objects import Money
 from nautilus_trader.persistence.wranglers import BarDataWrangler
 from nautilus_trader.test_kit.providers import TestInstrumentProvider
-# from nautilus_ai.strategies.simple_rule_policy import SimpleRulePolicyConfig, SimpleRulePolicy
+from nautilus_ai.portfolio import AdaptiveRiskEngine, AdaptiveRiskEngineConfig
+from nautilus_ai.strategies.simple_rule_policy import SimpleRulePolicyConfig, SimpleRulePolicy
 
 # Load environment variables from .env file
 load_dotenv("./.env")
+
+
+def configure_risk_engine() -> AdaptiveRiskEngine:
+    """Configure and return an AdaptiveRiskEngine instance.
+    """
+    config = AdaptiveRiskEngineConfig(
+        model_name="fixed_fractional",
+        model_init_args={"risk_pct":0.2}, # 0.05, 0.2
+        bracket_distance_atr=2.5, # 3
+        trailing_atr_multiple=0.3, # 0.3
+        trigger_type="MARK_PRICE",
+        max_trade_sizes={
+            "XRP": Decimal("150"),
+            "Any": Decimal("0.1")
+            },
+    )
+    return AdaptiveRiskEngine(config=config)
 
 if __name__ == "__main__":
     # Configure backtest engine
@@ -62,27 +80,29 @@ if __name__ == "__main__":
     )
 
     # Add a trading venue (multiple venues possible)
-    SIM = Venue("SIM")
+    OANDA = Venue("OANDA")
     engine.add_venue(
-        venue=SIM,
+        venue=OANDA,
         oms_type=OmsType.HEDGING,  # Venue will generate position IDs
         account_type=AccountType.MARGIN,
         base_currency=USD,  # Standard single-currency account
         starting_balances=[Money(10_000, USD)],  # Single-currency or multi-currency accounts
         fill_model=fill_model,
         bar_execution=True,  # If bar data should move the market (True by default)
+        trade_execution=True,
+        default_leverage=Decimal(25),
     )
 
     # Add instruments
-    EURUSD_SIM = TestInstrumentProvider.default_fx_ccy("EUR/USD", SIM)
-    engine.add_instrument(EURUSD_SIM)
+    AUDUSD = TestInstrumentProvider.audusd_cfd()
+    engine.add_instrument(AUDUSD)
 
-    bar_type = BarType.from_str("EUR/USD.SIM-15-MINUTE-LAST-EXTERNAL")
+    bar_type = BarType.from_str("AUD/USD.OANDA-15-MINUTE-LAST-EXTERNAL")
     
     # Set up wranglers
     wrangler = BarDataWrangler(
         bar_type=bar_type,
-        instrument=EURUSD_SIM,
+        instrument=AUDUSD,
     )
 
     # Add data
@@ -111,22 +131,26 @@ if __name__ == "__main__":
 
     bars_df["timestamp"] = pd.to_datetime(bars_df["timestamp"])
     bars_df.set_index("timestamp", inplace=True)
-    bars = wrangler.process(bars_df, default_volume=0.0, ts_init_delta=0)
+    bars = wrangler.process(bars_df[:10_000], default_volume=0.0, ts_init_delta=0)
 
     # Process the DataFrame into bar data
     engine.add_data(bars)
 
     # Configure your strategy
-    config = EMACrossBracketConfig(
-        instrument_id=EURUSD_SIM.id,
+    # config = EMACrossBracketConfig(
+    #     instrument_id=EURUSD.id,
+    #     bar_type=bar_type,
+    #     fast_ema_period=10,
+    #     slow_ema_period=20,
+    #     bracket_distance_atr=3.0,
+    #     trade_size=Decimal(1_000),
+    # )
+    config = SimpleRulePolicyConfig(
         bar_type=bar_type,
-        fast_ema_period=10,
-        slow_ema_period=20,
-        bracket_distance_atr=3.0,
-        trade_size=Decimal(1_000),
     )
     # Instantiate and add your strategy
-    strategy = EMACrossBracket(config=config)
+    # strategy = EMACrossBracket(config=config)
+    strategy = SimpleRulePolicy(config=config)
     engine.add_strategy(strategy=strategy)
 
     time.sleep(0.1)
@@ -144,7 +168,7 @@ if __name__ == "__main__":
         "display.width",
         300,
     ):
-        print(engine.trader.generate_account_report(SIM))
+        print(engine.trader.generate_account_report(OANDA))
         print(engine.trader.generate_order_fills_report())
         print(engine.trader.generate_positions_report())
 

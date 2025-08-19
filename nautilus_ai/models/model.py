@@ -80,29 +80,46 @@ class OnlineModel(metaclass=ABCMeta):
         # Implement loading logic here.
         pass
 
-    def detail(self) -> Any:
+    def detail(self) -> Dict[str, Any]:
         """
         Output detailed information about the model.
         """
         # This can be used to inspect the model's internal state,
         # parameters, or performance metrics.
-        return 
+        pass 
 
 
 class OfflineModel(metaclass=ABCMeta):
-    """Base class for machine learning models"""
+    """
+    Abstract base class for offline (batch) machine learning models.
+
+    Offline models are typically trained on a dataset all at once and used for batch prediction.
+    Subclasses should implement the required methods for fitting, predicting, saving, and loading.
+    """
 
     @abstractmethod
-    def learn(self, dataset: pd.DataFrame) -> None:
+    def fit(self, dataset: pd.DataFrame) -> None:
         """
-        Fit the model with dataset
+        Fit/train the model using the provided dataset.
+
+        Args:
+            dataset (pd.DataFrame):
+                Training data as a pandas DataFrame.
         """
         pass
 
     @abstractmethod
     def predict(self, dataset: pd.DataFrame) -> np.ndarray:
         """
-        Make predictions using the model
+        Make predictions for the given dataset.
+
+        Args:
+            dataset (pd.DataFrame):
+                Data to predict on as a pandas DataFrame.
+
+        Returns:
+            np.ndarray:
+                Array of predicted values (e.g., float for regression, int for classification).
         """
         pass
 
@@ -110,33 +127,32 @@ class OfflineModel(metaclass=ABCMeta):
         """
         Save the model to the specified path.
 
-        Parameters
-        ----------
-        path : str
-            The path to save the model.
+        Args:
+            path (str):
+                The path to save the model.
         """
-        # Implement saving logic here
-        # Can be called in the strategy to save the model after training with the backtest engine.
+        # Implement saving logic here (e.g., using pickle, joblib, etc.)
         pass
-    
+
     def load(self, path: str):
         """
         Load the model from the specified path.
 
-        Parameters
-        ----------
-        path : str
-            The path to load the model from.
+        Args:
+            path (str):
+                The path to load the model from.
         """
         # Implement loading logic here
-        # Can be called in the strategy to load the model before training with the backtest engine.
         pass
-    
-    def detail(self) -> Any:
+
+    def detail(self) -> Dict[str, Any]:
         """
-        Output detailed information about the model
+        Output detailed information about the model (e.g., parameters, metrics).
+
+        Returns:
+            Any: Model details or summary.
         """
-        return  
+        return
     
     
 class RLModel(metaclass=ABCMeta):

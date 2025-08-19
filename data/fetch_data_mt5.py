@@ -4,10 +4,14 @@ import time
 import logging
 import pytz
 import pandas as pd
+from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 import MetaTrader5 as mt5
+
+# Load environment variables from .env file
+load_dotenv("./.env")
 
 # Configure logger
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -515,18 +519,19 @@ def scrape_and_save_candles(data_sources: List[Dict[str, Any]], mt5_account_id: 
     print(f"Total time: {str(elapsed).split('.')[0]}")
 
 
-# if __name__ == '__main__':
-#     data_sources = [
-#         {"symbol": "EURUSD", "type": "klines"},
-#         {"symbol": "GBPUSD", "type": "klines"}
-#     ]
-#     scrape_and_save_candles(
-#         data_sources,
-#         mt5_account_id="",
-#         mt5_password="",
-#         mt5_server="",  
-#         timeframe="15min",
-#         since="2011-01-01T00:00:00Z", 
-#         until="2024-01-01T23:59:59Z",
-#     )
-
+if __name__ == '__main__':
+    data_sources = [
+        # {"symbol": "EURUSD", "type": "klines"},
+        # {"symbol": "GBPUSD", "type": "klines"},
+        {"symbol": "AUDUSD", "type": "klines"}
+    ]
+    scrape_and_save_candles(
+        data_sources,
+        mt5_account_id=os.getenv("MT5_ACCOUNT_ID") or "",
+        mt5_password=os.getenv("MT5_PASSWORD") or "",
+        mt5_server=os.getenv("MT5_SERVER") or "",  
+        timeframe="15min",
+        since="2011-01-01T00:00:00Z", 
+        until="2024-01-01T23:59:59Z",
+    )
+    

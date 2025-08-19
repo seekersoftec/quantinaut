@@ -96,3 +96,18 @@ class LogisticRegressionModel(OnlineModel):
         with open(path, "rb") as f:
             self._model = pickle.load(f)
             
+    def detail(self) -> Dict[str, Any]:
+        """
+        Output detailed information about the model, including parameters and metrics.
+
+        Returns:
+            dict: Dictionary containing model parameters and current metric value.
+        """
+        details = {
+            "l2": self.l2,
+            "l1": self.l1,
+            "metric": self._metric.get(),
+            "model_type": type(self._model).__name__,
+            "model_repr": repr(self._model)
+        }
+        return details
