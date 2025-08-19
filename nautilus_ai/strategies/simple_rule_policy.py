@@ -75,7 +75,6 @@ class SimpleRulePolicyConfig(StrategyConfig, frozen=True):
     model_path: Path = Path("./data/models/atr_vwap_model.pkl")
     scale_data: bool = False
     scaler_path: Union[Path, str, None] = None
-    # data_folder: Path = Path("./DATA_ITB")
 
 
 class SimpleRulePolicy(Strategy):
@@ -264,7 +263,7 @@ class SimpleRulePolicy(Strategy):
                 entry=entry,
                 action=action,
                 time_in_force=TimeInForce.GTC,
-                reason=f"ITB={action.name}",
+                reason=f"SRP={action.name}",
                 **kwargs
             )
         self.publish_data(
