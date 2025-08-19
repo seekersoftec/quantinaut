@@ -67,7 +67,7 @@ def scrape_and_save_candles(exchange_id: str, symbol: str, timeframe: str, since
         until = exchange.parse8601(until)
     
     exchange.load_markets()
-    file_path = Path("./ccxt/") / exchange_id / filename
+    file_path = Path("./ccxt") / exchange_id / filename
     file_path.parent.mkdir(parents=True, exist_ok=True)
     existing_data = load_existing_data(file_path)
     

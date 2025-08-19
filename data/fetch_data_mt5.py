@@ -200,7 +200,7 @@ def scrape_and_save_candles(data_sources: List[Dict[str, Any]], mt5_account_id: 
     with calculated chunk durations. Downloads data from the last record in the existing file
     (or a historical start date) up to the current time, fetching in duration-based chunks.
     """
-    data_path = Path(kwargs.get("data_folder", "data"))
+    data_path = Path(kwargs.get("data_folder", "./"))
     download_max_rows = kwargs.get("download_max_rows", 0)
 
     script_start_time = datetime.now()

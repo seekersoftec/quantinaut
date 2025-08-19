@@ -107,7 +107,7 @@ if __name__ == "__main__":
 
     # Add data
     # file_path = "../data/mt5/DXYm_H4_202001020000_202508012000.csv"
-    file_path = "../data/mt5/eurusd_15min_klines.csv.parquet"
+    file_path = "../data/mt5/audusd_15min_klines.csv.parquet"
 
     if ".parquet" in file_path:
         bars_df = pd.read_parquet(file_path)

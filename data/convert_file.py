@@ -1,8 +1,8 @@
 import polars as pl
 
 # Input and output file paths
-input_file = "./ccxt/binanceusdm/btc_usdt_1h.csv"   # Source file (TSV format)
-output_file = "./ccxt/binanceusdm/btc_usdt_1h.csv"  # CSV output
+input_file = "./mt5/audusd_15min_klines.csv"   # Source file (TSV format)
+output_file = "./mt5/audusd_15min_klines.csv"  # CSV output
 is_tsv = False  # Set to True if input is TSV, False if CSV
 
 
