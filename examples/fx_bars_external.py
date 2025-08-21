@@ -24,8 +24,6 @@ from nautilus_trader.backtest.engine import BacktestEngineConfig
 from nautilus_trader.backtest.models import FillModel
 from nautilus_trader.config import LoggingConfig
 from nautilus_trader.config import RiskEngineConfig
-from nautilus_trader.examples.strategies.ema_cross_bracket import EMACrossBracket
-from nautilus_trader.examples.strategies.ema_cross_bracket import EMACrossBracketConfig
 from nautilus_trader.model.currencies import USD
 from nautilus_trader.model.data import BarType
 from nautilus_trader.model.enums import AccountType
@@ -47,7 +45,7 @@ def configure_risk_engine() -> AdaptiveRiskEngine:
     """
     config = AdaptiveRiskEngineConfig(
         model_name="fixed_fractional",
-        model_init_args={"risk_pct":0.2}, # 0.05, 0.2
+        model_init_args={"risk_pct":0.02}, # 0.05, 0.2
         bracket_distance_atr=2.5, # 3
         trailing_atr_multiple=0.3, # 0.3
         trigger_type="MARK_PRICE",
@@ -108,7 +106,7 @@ if __name__ == "__main__":
     # Add data
     # file_path = "../data/mt5/DXYm_H4_202001020000_202508012000.csv"
     file_path = "../data/mt5/audusd_15min_klines.csv.parquet"
-    start_date = "2024-01-01 00:00:00"
+    start_date = "2023-01-01 00:00:00"
     end_date = "2024-12-31 23:59:59"
 
     if ".parquet" in file_path:
@@ -140,23 +138,15 @@ if __name__ == "__main__":
     engine.add_data(bars)
 
     # Configure your strategies
-    ema_config = EMACrossBracketConfig(
-        instrument_id=AUDUSD.id,
-        bar_type=bar_type,
-        fast_ema_period=10,
-        slow_ema_period=20,
-        bracket_distance_atr=3.0,
-        trade_size=Decimal(1_000),
-    )
     srp_config = SimpleRulePolicyConfig(
         bar_type=bar_type,
         rvi_period=9, # 9, 10, 21
         rvi_threshold=60, # 60
+        # atr_vwap_batch_bars=True,
     )
     # Instantiate and add your strategy
     strategies = [
         configure_risk_engine(),
-        # EMACrossBracket(config=ema_config), 
         SimpleRulePolicy(config=srp_config),
     ]
     engine.add_strategies(strategies=strategies)

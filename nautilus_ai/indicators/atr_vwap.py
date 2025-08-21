@@ -36,6 +36,7 @@ class AverageTrueRangeWithVwap(Indicator):
         self.price_type = price_type
         self.batch_bars = batch_bars # use to clear the prices after it has been used 
         
+        self._count = 0
         self._prices = deque(maxlen=period)
         self._atr = AverageTrueRange(period)
         self._vwap = VolumeWeightedAveragePrice()
@@ -79,6 +80,7 @@ class AverageTrueRangeWithVwap(Indicator):
         self._prices.append(price)
         self._atr.update_raw(high, low, close)
         self._vwap.update_raw(price, volume, ts)
+        self._count += 1
         
         # Initialization logic
         if not self.initialized:
@@ -91,7 +93,7 @@ class AverageTrueRangeWithVwap(Indicator):
         
         self.atr = self._atr.value
         self.vwap = self._vwap.value
-        if self.model is not None:
+        if self.model is not None and self._count >= self.period: # 
             # Assemble the features from the rolling window
             features = self.features.generate({"atr": self._atr.value, "vwap": self._vwap.value, "prices": list(self._prices)})
             target = self.label.transform_one({"prices": list(self._prices)})
@@ -107,7 +109,7 @@ class AverageTrueRangeWithVwap(Indicator):
             
         # For rolling approaches that require one output per fixed window.
         if self.batch_bars:
-            self._prices.clear() 
+            self._count = 0
 
     def set_model(self, features: Feature, label: Label, model: OnlineModel):
         """
@@ -146,6 +148,7 @@ class AverageTrueRangeWithVwap(Indicator):
         """
         Resets the state of the indicator, clearing its rolling window and model.
         """
+        self._count = 0
         self._prices.clear()
         self._atr.reset()
         self._vwap.reset()
