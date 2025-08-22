@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 """
 Web Channel
+
+From https://github.com/karanpratapsingh/HyperTrade/
 """
+
 from __future__ import annotations
 import asyncio
-import threading
+import websockets
 from typing import Any, Dict, Optional
 
 from nautilus_trader.core.correctness import PyCondition
@@ -70,3 +73,24 @@ class WebChannel(Channel):
         self._server = None  # Placeholder for WebSocket server instance
         self._loop = asyncio.get_event_loop()  # Event loop for async operations
 
+
+
+
+async def echo(websocket):
+    """
+    Handles incoming WebSocket connections and echoes back received messages.
+    """
+    async for message in websocket:
+        print(f"Received: {message}")
+        await websocket.send(f"Echo: {message}")
+
+async def main():
+    """
+    Starts the WebSocket server.
+    """
+    async with websockets.serve(echo, "localhost", 8090):
+        print("WebSocket server started on ws://localhost:8090")
+        await asyncio.Future()  # Run forever
+
+if __name__ == "__main__":
+    asyncio.run(main())

@@ -10,3 +10,4 @@ Nautilus Trader - Communication Channel Module
 - Web (Can add a UI interface to this, from https://github.com/karanpratapsingh/HyperTrade/)
 """
 from .channel import *
+from .telegram import TelegramChannelConfig, TelegramChannel
