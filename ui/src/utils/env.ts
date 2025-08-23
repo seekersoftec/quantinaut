@@ -1,6 +1,6 @@
 class Env {
-  static NATS_USER = import.meta.env.VITE_NATS_USER;
-  static NATS_PASS = import.meta.env.VITE_NATS_PASS;
+  static WS_USER = import.meta.env.VITE_WS_USER;
+  static WS_PASS = import.meta.env.VITE_WS_PASS;
 }
 
 export default Env;

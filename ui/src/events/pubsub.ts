@@ -15,8 +15,8 @@ import { Events } from './types';
 const SERVER_URL = `ws://${API_HOST}/nats`;
 
 const AUTH = {
-  user: Env.NATS_USER,
-  pass: Env.NATS_PASS,
+  user: Env.WS_USER,
+  pass: Env.WS_PASS,
 };
 
 export class PubSub {
