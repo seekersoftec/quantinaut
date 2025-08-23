@@ -9,7 +9,7 @@ import {
 } from '../events/types';
 
 const defaultOptions: Partial<ArgsProps> = {
-  duration: 5,
+  duration: 10,
   placement: 'bottomRight',
 };
 

@@ -1,7 +1,8 @@
 import { Signal } from '../events/types';
 
 export enum Colors {
-  primary = '#1890ff',
+  primary = '#24a756',
+  // primary = '#1890ff',
   darkGray = '#9ca3af',
   lightGray = '#ddd',
   light = '#f3f4f6',
