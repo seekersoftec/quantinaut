@@ -2,10 +2,8 @@
 .venv/
 .ipynb_checkpoints/*
 .idea/
-notebooks/
-archived/
-data/
-docs/
+**/node_modules
+node_modules/**
 htmlcov
 .coverage
 MANIFEST
@@ -14,4 +12,7 @@ dist/
 *.pyd
 build/*
 DATA/*
-
+notebooks/
+archived/
+data/
+docs/
