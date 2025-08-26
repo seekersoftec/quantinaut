@@ -1,4 +1,4 @@
-import { gql } from "graphql-request";
+// import { gql } from "graphql-request";
 
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
@@ -7,35 +7,40 @@ import Google from "next-auth/providers/google";
 import GitHub from "next-auth/providers/github"
 
 type AuthCredentials = {
-  email: string;
+  username: string;
   password: string;
 };
 
-const hasuraQuery = async (variables: AuthCredentials) => {
-  const query = gql`
-    query users($email: String!, $password: bpchar!) {
-      users(where: { email: { _eq: $email }, password: { _eq: $password } }) {
-        id
-        name
-        email
-        image
-        created_at
-        updated_at
-      }
-    }
-  `;
+const serverAPIRequest = async (variables: AuthCredentials) => {
+  // const query = gql`
+  //   query users($email: String!, $password: bpchar!) {
+  //     users(where: { email: { _eq: $email }, password: { _eq: $password } }) {
+  //       id
+  //       name
+  //       email
+  //       image
+  //       created_at
+  //       updated_at
+  //     }
+  //   }
+  // `;
 
-  const res = await fetch(process.env.AUTH_HASURA_GRAPHQL!, {
+  console.log(variables);
+
+  const BACKEND_URL = process.env.AUTH_BACKEND_URL || "http://127.0.0.1:8000";
+  const res = await fetch(BACKEND_URL + "/api/login", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-hasura-admin-secret": process.env.AUTH_HASURA_SECRET!,
+      // "x-hasura-admin-secret": process.env.AUTH_HASURA_SECRET!,
     },
-    body: JSON.stringify({ query, variables }),
+    // body: JSON.stringify({ query, variables }),
+    body: JSON.stringify(variables)
   });
 
+  console.log(await res.json());
   if (!res.ok) {
-    throw new Error("Failed to fetch user");
+    throw new Error("Failed to fetch token");
   }
 
   return await res.json();
@@ -44,10 +49,10 @@ const hasuraQuery = async (variables: AuthCredentials) => {
 export const { auth, handlers, signIn, signOut } = NextAuth({
   providers: [
     Credentials({
-      id: "hasura-credentials",
-      name: "Hasura Credentials",
+      id: "nautilus-server-credentials",
+      name: "Nautilus Server Credentials",
       credentials: {
-        email: { label: "Email", type: "email" },
+        username: { label: "Username", type: "name" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
@@ -55,18 +60,19 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
           if (!credentials) {
             return null;
           }
-
-          const { data } = await hasuraQuery({
-            email: credentials.email as string,
+   
+          const { data } = await serverAPIRequest({
+            username: credentials.username as string,
             password: credentials.password as string,
           });
 
-          if (data.users.length > 0) {
+          if (data.length > 0) {
             return {
-              id: data.users[0].id,
-              name: data.users[0].name,
-              email: data.users[0].email,
-              image: data.users[0].image,
+              id: data.uid,
+              name: data.uid,
+              // email: data.users[0].email,
+              // image: data.users[0].image??,
+              token: data.access_token
             };
           } else {
             return null;
@@ -101,7 +107,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       return true;
     },
     async redirect({ baseUrl }) {
-      return `${baseUrl}/protected`;
+      return `${baseUrl}/`;
     },
     async session({ session, token }) {
       if (session.user?.name) session.user.name = token.name;

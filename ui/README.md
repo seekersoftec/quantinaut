@@ -2,6 +2,8 @@
 
 For the Web channel.
 
+Inspired by: https://github.com/karanpratapsingh/HyperTrade/
+
 ## Guide
 
 Install pnpm:
