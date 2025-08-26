@@ -20,7 +20,13 @@ dependencies = [
     "joblib>=1.5.1",
     "river>=0.22.0",
     "fire>=0.7.0",
-    "websockets>=15.0.1",
+    "eventlet>=0.40.2",
+    "python-socketio>=5.13.0",
+    "fastapi>=0.116.1",
+    "pydantic>=2.11.7",
+    "jwt>=1.4.0",
+    "uvicorn[standard]>=0.35.0",
+    "aiogram>=3.22.0",
 ]
 
 [dependency-groups]
