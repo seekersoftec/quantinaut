@@ -1,6 +1,6 @@
 # Docs [In Progress]
 
-**Nautilus AI** is a powerful module designed to automate the process of training and deploying predictive machine learning models within the [Nautilus Trader](https://github.com/nautechsystems/nautilus_trader/) ecosystem. By leveraging advanced AI techniques, Nautilus AI empowers users to make data-driven trading decisions with greater precision and efficiency.
+**Quantinaut** is a powerful module designed to automate the process of training and deploying predictive machine learning models within the [Nautilus Trader](https://github.com/nautechsystems/nautilus_trader/) ecosystem. By leveraging advanced AI techniques, Quantinaut empowers users to make data-driven trading decisions with greater precision and efficiency.
 
 **Key Features:**
 
@@ -13,7 +13,7 @@
 - **Efficient Data Management:** Automatically cleans and preprocesses historical data, streamlining the data preparation process.
 - **Dimensionality Reduction:** Reduces the complexity of the feature space, improving model performance and reducing computational costs.
 
-**Nautilus AI is inspired by FreqAI**
+**Quantinaut is inspired by FreqAI**
 
 # References
 

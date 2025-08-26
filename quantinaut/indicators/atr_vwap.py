@@ -1,4 +1,4 @@
-# nautilus_ai/indicators/simple_set.py
+# quantinaut/indicators/simple_set.py
 import pandas as pd
 from datetime import datetime
 from collections import deque

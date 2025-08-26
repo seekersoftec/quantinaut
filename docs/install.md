@@ -31,7 +31,7 @@ If you want to clone the repo, create a venv, and install dependencies in one go
 
 ```bash
 git clone https://github.com/seekersoftec/quantinaut.git && \
-cd nautilus_ai && \
+cd quantinaut && \
 uv venv && \
 source .venv/bin/activate && \
 uv pip install -e .
@@ -41,16 +41,16 @@ uv pip install -e .
 
 ```powershell
 git clone https://github.com/seekersoftec/quantinaut.git; `
-cd nautilus_ai; `
+cd quantinaut; `
 uv venv; `
 .venv\Scripts\Activate.ps1; `
 uv pip install -e .
 ```
 
-After installation, run NautilusAI:
+After installation, run Quantinaut:
 
 ```bash
-python -m nautilus_ai
+python -m quantinaut
 ```
 
 ---
@@ -63,7 +63,7 @@ If you prefer more control over the installation process:
 
 ```bash
 git clone https://github.com/seekersoftec/quantinaut.git
-cd nautilus_ai
+cd quantinaut
 ```
 
 ### Step 2 – Install System Dependencies (Linux Example)
@@ -92,8 +92,8 @@ source .venv/bin/activate  # macOS/Linux
 **Option B – Conda Environment**
 
 ```bash
-conda create --name nautilus_ai python=3.11
-conda activate nautilus_ai
+conda create --name quantinaut python=3.11
+conda activate quantinaut
 python --version  # Verify Python version
 ```
 

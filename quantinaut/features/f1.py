@@ -1,4 +1,4 @@
-# nautilus_ai/features/f1.py
+# quantinaut/features/f1.py
 import numpy as np
 from typing import Any, Dict, Optional
 from quantinaut.features.feature import Feature

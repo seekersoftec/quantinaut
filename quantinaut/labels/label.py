@@ -1,4 +1,4 @@
-# nautilus_ai/labels/label.py
+# quantinaut/labels/label.py
 from abc import ABCMeta, abstractmethod
 from typing import Any, Dict, List, Optional, Union
 

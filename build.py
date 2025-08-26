@@ -125,7 +125,7 @@ def build_extensions() -> list[Extension]:
             extra_link_args=extra_link_args,
             extra_compile_args=extra_compile_args,
         )
-        for pyx in Path("nautilus_ai").rglob("*.pyx")
+        for pyx in Path("quantinaut").rglob("*.pyx")
     ]
 
 
@@ -158,7 +158,7 @@ def build() -> None:
 
     distribution = Distribution(
         {
-            "name": "nautilus_ai",
+            "name": "quantinaut",
             "ext_modules": ext_modules,
             "zip_safe": False,
         }

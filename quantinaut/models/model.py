@@ -1,4 +1,4 @@
-# nautilus_ai/models/base.py
+# quantinaut/models/base.py
 # Non-RL models should follow river's API
 from pathlib import Path
 import pickle

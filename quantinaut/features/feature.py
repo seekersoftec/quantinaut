@@ -1,4 +1,4 @@
-# nautilus_ai/features/feature.py
+# quantinaut/features/feature.py
 from abc import ABCMeta, abstractmethod
 from typing import Any, Dict, Optional
 

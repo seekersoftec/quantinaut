@@ -10,7 +10,7 @@ def run_cmd(cmd, shell=False):
     subprocess.check_call(cmd, shell=shell)
 
 def main():
-    print("=== NautilusAI Installer ===")
+    print("=== Quantinaut Installer ===")
 
     auto_run = "--run" in sys.argv
 
@@ -28,7 +28,7 @@ def main():
     run_cmd(["uv", "venv"])
 
     # Install dependencies
-    print("📦 Installing NautilusAI dependencies...")
+    print("📦 Installing Quantinaut dependencies...")
     run_cmd(["uv", "pip", "install", "-e", "."])
 
     # Paths for activation
@@ -40,13 +40,13 @@ def main():
         python_path = Path(".venv") / "bin" / "python"
 
     if auto_run:
-        print("\n🚀 Running NautilusAI...")
-        run_cmd([str(python_path), "-m", "nautilus_ai"])
+        print("\n🚀 Running Quantinaut...")
+        run_cmd([str(python_path), "-m", "quantinaut"])
         return
 
     print("\n🎉 Installation complete!")
     print(f"To activate the environment, run:\n  {activate_path}")
-    print("To start NautilusAI, run:\n  python -m nautilus_ai")
+    print("To start Quantinaut, run:\n  python -m quantinaut")
 
 if __name__ == "__main__":
     try:
