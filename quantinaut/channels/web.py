@@ -204,9 +204,7 @@ class WebChannel(Channel):
 # ==============================
 # Run Server Directly
 # ==============================
-# if __name__ == "__main__":
 config = WebChannelConfig(username="quantinaut", password="password")
 channel = WebChannel(config)
-# channel.start_channel()
-app = channel.socket_app  # Add this near the bottom of web.py
-
+app = channel.socket_app 
+# uvicorn quantinaut.channels.web:app --reload --port 8000
