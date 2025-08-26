@@ -1,10 +1,10 @@
 [project]
-name = "nautilus-ai"
+name = "quantinaut"
 version = "0.1.0"
-description = "Autonomous trading bot using machine learning and feature engineering."
+description = "Navigating Markets with Intelligent Exploration."
 license = "MIT"
 readme = "README.md"
-keywords = ["quant", "quantitative", "investment", "trading", "algotrading", "ml"]
+keywords = ["quant", "quantitative", "investment", "trading", "algotrading", "ml", "deep-learning", "nautilus-trader", "online-learning"]
 requires-python = ">=3.11,<3.14"
 dependencies = [
     "nautilus-trader>=1.219.0",
