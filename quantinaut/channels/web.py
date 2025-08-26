@@ -2,7 +2,6 @@
 """
 Web Channel
 
-Refactored for clarity, modularity, and maintainability.
 Inspired by: https://github.com/karanpratapsingh/HyperTrade/
 """
 
