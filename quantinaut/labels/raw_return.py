@@ -8,7 +8,7 @@ Most basic form of labeling based on raw return of each observation relative to 
 import numpy as np
 import pandas as pd
 from typing import Any, Dict, Optional, Union
-from nautilus_ai.labels.label import Label
+from quantinaut.labels.label import Label
 
 
 class RawReturn(Label):

@@ -4,7 +4,7 @@ from typing import Dict, Union
 from pyparsing import Any
 from river import compose, linear_model, preprocessing, metrics
 from river import multiclass, optim
-from nautilus_ai.models.model import OnlineModel
+from quantinaut.models.model import OnlineModel
 
 
 class LogisticRegressionModel(OnlineModel):

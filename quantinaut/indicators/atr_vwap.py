@@ -8,9 +8,9 @@ from nautilus_trader.model.enums import PriceType
 from nautilus_trader.indicators.base.indicator import Indicator
 from nautilus_trader.indicators.atr import AverageTrueRange
 from nautilus_trader.indicators.vwap import VolumeWeightedAveragePrice
-from nautilus_ai.models import OnlineModel
-from nautilus_ai.features import Feature
-from nautilus_ai.labels import Label
+from quantinaut.models import OnlineModel
+from quantinaut.features import Feature
+from quantinaut.labels import Label
 
 
 class AverageTrueRangeWithVwap(Indicator):

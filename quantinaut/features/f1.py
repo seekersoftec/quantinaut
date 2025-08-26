@@ -1,7 +1,7 @@
 # nautilus_ai/features/f1.py
 import numpy as np
 from typing import Any, Dict, Optional
-from nautilus_ai.features.feature import Feature
+from quantinaut.features.feature import Feature
 
 
 class F1(Feature):

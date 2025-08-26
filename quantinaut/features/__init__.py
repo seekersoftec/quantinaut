@@ -5,5 +5,5 @@ Sources:
     - [MLFinLab](https://github.com/hudson-and-thames/mlfinlab/)
 """
 
-from nautilus_ai.features.feature import Feature
-from nautilus_ai.features.f1 import F1
+from quantinaut.features.feature import Feature
+from quantinaut.features.f1 import F1

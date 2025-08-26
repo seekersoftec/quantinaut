@@ -5,7 +5,7 @@ from typing import Any, Dict, Optional
 
 class Feature(metaclass=ABCMeta):
     """
-    Abstract base class for feature generators in Nautilus AI.
+    Abstract base class for feature generators.
 
     Subclasses should implement the `generate` method to produce features
     from a given context (e.g., a sample or data point).

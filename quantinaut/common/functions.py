@@ -8,7 +8,7 @@ import toml
 from pathlib import Path
 from typing import Dict, Any, Union
 from nautilus_trader.model.enums import OrderSide
-from nautilus_ai.common.enums import TradingDecision
+from quantinaut.common.enums import TradingDecision
 
 def trading_decision_to_order_side(decision: TradingDecision) -> OrderSide:
     """

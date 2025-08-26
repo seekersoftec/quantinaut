@@ -33,8 +33,8 @@ from nautilus_trader.model.identifiers import Venue
 from nautilus_trader.model.objects import Money
 from nautilus_trader.persistence.wranglers import BarDataWrangler
 from nautilus_trader.test_kit.providers import TestInstrumentProvider
-from nautilus_ai.portfolio import AdaptiveRiskEngine, AdaptiveRiskEngineConfig
-from nautilus_ai.strategies.simple_rule_policy import SimpleRulePolicyConfig, SimpleRulePolicy
+from quantinaut.portfolio import AdaptiveRiskEngine, AdaptiveRiskEngineConfig
+from quantinaut.strategies.simple_rule_policy import SimpleRulePolicyConfig, SimpleRulePolicy
 
 # Load environment variables from .env file
 load_dotenv("./.env")

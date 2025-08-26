@@ -179,7 +179,7 @@ def build() -> None:
 if __name__ == "__main__":
     print("\033[36m")
     print("=====================================================================")
-    print(f"Nautilus AI Builder {_get_version()}")
+    print(f"Builder {_get_version()}")
     print(
         "=====================================================================\033[0m"
     )

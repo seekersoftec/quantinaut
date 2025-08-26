@@ -17,13 +17,13 @@ from nautilus_trader.config import StrategyConfig
 from nautilus_trader.trading.strategy import Strategy
 from nautilus_trader.indicators.rvi import RelativeVolatilityIndex
 
-from nautilus_ai.common import save_logs, trading_decision_to_order_side
-from nautilus_ai.common import TradingDecision, TradeSignal, Volatility
-from nautilus_ai.channels import ChannelData
-from nautilus_ai.features import Feature, F1
-from nautilus_ai.labels import Label, RawReturn
-from nautilus_ai.models import OnlineModel, LogisticRegressionModel
-from nautilus_ai.indicators.atr_vwap import AverageTrueRangeWithVwap
+from quantinaut.common import save_logs, trading_decision_to_order_side
+from quantinaut.common import TradingDecision, TradeSignal, Volatility
+from quantinaut.channels import ChannelData
+from quantinaut.features import Feature, F1
+from quantinaut.labels import Label, RawReturn
+from quantinaut.models import OnlineModel, LogisticRegressionModel
+from quantinaut.indicators.atr_vwap import AverageTrueRangeWithVwap
 
 np.random.seed(100)
     

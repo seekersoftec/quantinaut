@@ -1,2 +1,2 @@
-from nautilus_ai.portfolio.risk_models import BaseRiskModel, RiskModelFactory
-from nautilus_ai.portfolio.risk_engine import AdaptiveRiskEngine, AdaptiveRiskEngineConfig
+from quantinaut.portfolio.risk_models import BaseRiskModel, RiskModelFactory
+from quantinaut.portfolio.risk_engine import AdaptiveRiskEngine, AdaptiveRiskEngineConfig

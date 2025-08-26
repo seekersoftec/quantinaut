@@ -20,8 +20,8 @@ from nautilus_trader.model.orders.list import OrderList
 from nautilus_trader.model.orders import MarketOrder, TrailingStopMarketOrder
 from nautilus_trader.trading.strategy import Strategy
 
-from nautilus_ai.common import TradeSignal, TradingDecision
-from nautilus_ai.portfolio.risk_models import BaseRiskModel, RiskModelFactory
+from quantinaut.common import TradeSignal, TradingDecision
+from quantinaut.portfolio.risk_models import BaseRiskModel, RiskModelFactory
 
 
 # Set the precision high enough to handle the quantization

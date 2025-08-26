@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="docs/assets/logo.png" alt="Nautilus AI Logo" width="100"/>
+  <img src="docs/assets/logo.png" alt="Quantinaut Logo" width="100"/>
 </p>
 
-<h1 align="center">Nautilus AI</h1>
+<h1 align="center">Quantinaut (Formerly Nautilus AI)</h1>
 <p align="center"><em>Breaking Alpha</em></p>
 
 <p align="center">
@@ -20,28 +20,28 @@
 
 <!-- --- -->
 
-**Nautilus AI** — *An open-source, fully autonomous algorithmic trading platform integrating machine learning, quantitative analysis, and feature engineering to deliver adaptive, high-performance strategies in real-time markets.*
+**Quantinaut** — *An open-source, fully autonomous algorithmic trading platform integrating machine learning, quantitative analysis, and feature engineering to deliver adaptive, high-performance strategies in real-time markets.*
 
 <!-- --- -->
 
 ## 🚀 Introduction
 
-Welcome to **Nautilus AI** — your gateway to the future of algorithmic trading! This project brings together the power of machine learning and the speed of the [Nautilus Trader](https://github.com/nautechsystems/nautilus_trader/) framework to build intelligent, adaptive trading bots. Whether you're a quant, a developer, or just curious about AI in finance, Nautilus AI is designed to help you experiment, learn, and deploy cutting-edge trading strategies.
+Welcome to **Quantinaut** — your gateway to the future of algorithmic trading! This project brings together the power of machine learning and the speed of the [Nautilus Trader](https://github.com/nautechsystems/nautilus_trader/) framework to build intelligent, adaptive trading bots. Whether you're a quant, a developer, or just curious about AI in finance, Quantinaut is designed to help you experiment, learn, and deploy cutting-edge trading strategies.
 
 ---
 
 ## 🌟 Project Vision
 
-Nautilus AI aims to:
+Quantinaut aims to:
 - Empower traders and researchers to build robust, autonomous trading systems.
 - Leverage state-of-the-art ML algorithms for both predictive indicators and strategy optimization.
 - Enable rapid experimentation and validation in realistic market environments.
 
 ---
 
-## 🧠 How Nautilus AI Works
+## 🧠 How Quantinaut Works
 
-Nautilus AI separates **where** different types of machine learning shine in a trading stack:
+Quantinaut separates **where** different types of machine learning shine in a trading stack:
 
 - **Reinforcement Learning (RL):** Powers trading strategies, making smart decisions with full market and portfolio context.
 - **Supervised & Unsupervised Learning:** Fuels predictive indicators, forecasting market variables like price direction, volatility, and order flow.

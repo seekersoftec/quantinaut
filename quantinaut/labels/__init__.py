@@ -10,5 +10,5 @@ TripleBarrierND:
  - https://github.com/nkonts/barrier-method
 """
 
-from nautilus_ai.labels.label import Label
-from nautilus_ai.labels.raw_return import RawReturn
+from quantinaut.labels.label import Label
+from quantinaut.labels.raw_return import RawReturn

@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional, Union
 
 class Label(metaclass=ABCMeta):
     """
-    Abstract base class for label transformers in Nautilus AI.
+    Abstract base class for label transformers.
 
     Subclasses should implement methods to convert input features into labels
     for supervised learning tasks (classification or regression).

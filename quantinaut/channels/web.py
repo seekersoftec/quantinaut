@@ -11,7 +11,7 @@ import websockets
 from typing import Any, Dict, Optional
 
 from nautilus_trader.core.correctness import PyCondition
-from nautilus_ai.channels.channel import ChannelConfig, Channel, ChannelType
+from quantinaut.channels.channel import ChannelConfig, Channel, ChannelType
 
 # TODO: Create a web channel that uses websockets for real-time communication.
 # Should use sqlite for storing messages and user data.

@@ -30,7 +30,7 @@ If you want to clone the repo, create a venv, and install dependencies in one go
 **Linux / macOS**
 
 ```bash
-git clone https://github.com/seekersoftec/nautilus_ai.git && \
+git clone https://github.com/seekersoftec/quantinaut.git && \
 cd nautilus_ai && \
 uv venv && \
 source .venv/bin/activate && \
@@ -40,7 +40,7 @@ uv pip install -e .
 **Windows PowerShell**
 
 ```powershell
-git clone https://github.com/seekersoftec/nautilus_ai.git; `
+git clone https://github.com/seekersoftec/quantinaut.git; `
 cd nautilus_ai; `
 uv venv; `
 .venv\Scripts\Activate.ps1; `
@@ -62,7 +62,7 @@ If you prefer more control over the installation process:
 ### Step 1 – Clone the Repository
 
 ```bash
-git clone https://github.com/seekersoftec/nautilus_ai.git
+git clone https://github.com/seekersoftec/quantinaut.git
 cd nautilus_ai
 ```
 

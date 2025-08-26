@@ -1,2 +1,2 @@
-from nautilus_ai.models.model import OnlineModel, OfflineModel
-from nautilus_ai.models.logistic_model import LogisticRegressionModel
+from quantinaut.models.model import OnlineModel, OfflineModel
+from quantinaut.models.logistic_model import LogisticRegressionModel
