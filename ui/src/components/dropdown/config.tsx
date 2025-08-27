@@ -2,7 +2,7 @@ import { Avatar, Dropdown, Menu } from 'antd';
 import clsx from 'clsx';
 import React from 'react';
 import { Configs, useConfigs } from '../../api/configs';
-import { Loader } from '../ui/loader';
+import { Loader } from '../../components/ui/loader';
 import { useConfigsStore } from '../../store/configs';
 import { getCryptoIcon } from '../../theme/icons';
 

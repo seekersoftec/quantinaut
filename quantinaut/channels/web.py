@@ -8,6 +8,7 @@ Inspired by: https://github.com/karanpratapsingh/HyperTrade/
 from __future__ import annotations
 
 import asyncio
+from enum import Enum
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 
@@ -27,6 +28,22 @@ from quantinaut.channels.channel import ChannelConfig, Channel, ChannelType
 # ==============================
 # Models
 # ==============================
+class Events(Enum):
+    DataFrame = 'Event:DataFrame'
+    GetDataFrame = 'Event:DataFrame:Get'
+    GetBalance = 'Event:Balance:Get'
+    GetPositions = 'Event:Positions:Get'
+    GetStats = 'Event:Stats:Get'
+    GetTrades = 'Event:Trades:Get'
+    UpdateTradingEnabled = 'Event:Config:Update:TradingEnabled'
+    GetConfigs = 'Event:Configs:Get'
+    UpdateAllowedAmount = 'Event:Config:Update:AllowedAmount'
+    CriticalError = 'Event:CriticalError'
+    Order = 'Event:Order'
+    Trade = 'Event:Trade'
+    GetStrategies = 'Event:Strategies:Get'
+    UpdateStrategies = 'Event:Strategies:Update'
+
 class LoginRequest(BaseModel):
     username: str
     password: str
@@ -160,26 +177,33 @@ class WebChannel(Channel):
     def _register_socket_events(self):
         @self.sio.event
         async def connect(sid, environ, auth):
-            token = auth.get("token") if auth else None
-            user = verify_jwt_token(token, self.config.jwt_secret, self.config.jwt_algorithm)
+            user = None
+            token = str(auth.get("token")) if auth else None
+            if token == f"quantinaut:password":
+                user = self.config.username
+                # user = verify_jwt_token(token, self.config.jwt_secret, self.config.jwt_algorithm)
+            else:
+                raise ConnectionRefusedError("Missing or invalid token")
+            
+            
             if not user:
-                await self.sio.disconnect(sid)
-                return
+                # await self.sio.disconnect(sid)
+                self.log.info(f'Client {sid} failed authentication.')
+                raise ConnectionRefusedError("Authentication failed")
+            
+            # Save authenticated user in per-client session
+            await self.sio.save_session(sid, {'user': user})
             self.log.info(f"User connected: {user}")
 
         @self.sio.event
-        async def message(sid, data):
-            token = data.get("token")
+        async def dataframe(sid, data):
+            session = await self.sio.get_session(sid)
+            user = session.get('user') if session else None
             msg = data.get("msg")
 
-            if not token or not msg:
+            if not msg or not user:
                 return
-
-            user = verify_jwt_token(token, self.config.jwt_secret, self.config.jwt_algorithm)
-            if not user:
-                return
-
-            await self.sio.emit("message", {"from": user, "msg": msg})
+            await self.sio.emit(Events.DataFrame.value, {"from": user, "msg": msg})
 
     # ------------------------------
     # Channel Lifecycle
@@ -187,7 +211,7 @@ class WebChannel(Channel):
     async def send_message(self, message: str, **kwargs: Dict[str, Any]) -> None:
         pass
 
-    def start_channel(self, **kwargs: Dict[str, Any]) -> None:
+    async def start_channel(self, **kwargs: Dict[str, Any]) -> None:
         uvicorn.run(
             self.socket_app,
             host="0.0.0.0",
@@ -195,7 +219,7 @@ class WebChannel(Channel):
             reload=False,
         )
 
-    def stop_channel(self) -> None:
+    async def stop_channel(self) -> None:
         # Implement graceful shutdown logic if needed
         self.log.info("Stopping WebChannel... Triggering graceful shutdown...")
 
