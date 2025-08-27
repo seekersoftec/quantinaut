@@ -33,28 +33,12 @@ from nautilus_trader.model.identifiers import Venue
 from nautilus_trader.model.objects import Money
 from nautilus_trader.persistence.wranglers import BarDataWrangler
 from nautilus_trader.test_kit.providers import TestInstrumentProvider
-from quantinaut.portfolio import AdaptiveRiskEngine, AdaptiveRiskEngineConfig
-from quantinaut.strategies.rule_policy import RulePolicyConfig, RulePolicy
+
+from examples.backtest.components import risk_engine, rule_policy_strategy
 
 # Load environment variables from .env file
 load_dotenv("./.env")
 
-
-def configure_risk_engine() -> AdaptiveRiskEngine:
-    """Configure and return an AdaptiveRiskEngine instance.
-    """
-    config = AdaptiveRiskEngineConfig(
-        model_name="fixed_fractional",
-        model_init_args={"risk_pct":0.02}, # 0.05, 0.2
-        bracket_distance_atr=2.5, # 3
-        trailing_atr_multiple=0.3, # 0.3
-        trigger_type="MARK_PRICE",
-        max_trade_sizes={
-            "XRP": Decimal("150"),
-            "Any": Decimal("0.1")
-            },
-    )
-    return AdaptiveRiskEngine(config=config)
 
 if __name__ == "__main__":
     # Configure backtest engine
@@ -137,17 +121,11 @@ if __name__ == "__main__":
     # Process the DataFrame into bar data
     engine.add_data(bars)
 
-    # Configure your strategies
-    srp_config = RulePolicyConfig(
-        bar_type=bar_type,
-        rvi_period=9, # 9, 10, 21
-        rvi_threshold=60, # 60
-        # atr_vwap_batch_bars=True,
-    )
+
     # Instantiate and add your strategy
     strategies = [
-        configure_risk_engine(),
-        RulePolicy(config=srp_config),
+        risk_engine(),
+        rule_policy_strategy(bar_type=bar_type),
     ]
     engine.add_strategies(strategies=strategies)
 

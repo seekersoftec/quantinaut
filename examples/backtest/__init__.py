@@ -1,0 +1,1 @@
+# Asses the profitability of an investment strategy

@@ -68,9 +68,9 @@ class RulePolicyConfig(StrategyConfig, frozen=True):
     rvi_period: PositiveInt = 9
     rvi_threshold: PositiveFloat = 50.0
     atr_vwap_period: PositiveInt = 14
-    atr_vwap_batch_bars: bool = True  # Whether to use batch bars for ATR-VWAP
+    atr_vwap_batch_bars: bool = False  # Whether to use batch bars for ATR-VWAP
     features: Feature = F1()
-    label: Label = RawReturn(logarithmic=True, binary=True)
+    label: Label = RawReturn(logarithmic=True, binary=False)
     model: OnlineModel = LogisticRegressionModel()
     model_path: Path = Path("./data/models/atr_vwap_model.pkl")
     scale_data: bool = False
@@ -209,9 +209,13 @@ class RulePolicy(Strategy):
         Sets the trade signal and volatility, then triggers trade and logging actions.
         """
         # Map prediction to trade signal (example logic)
-        if self.atr_vwap.value == 1:
+        if self.atr_vwap.value is None:
+            self.log.warning("ATR-VWAP value is None, cannot proceed with trading decision.")
+            return
+        
+        if self.atr_vwap.value > 0:
             self._trade_signal = TradingDecision.ENTER_LONG
-        elif self.atr_vwap.value == -1:
+        elif self.atr_vwap.value < 0:
             self._trade_signal = TradingDecision.ENTER_SHORT
         else:
             self._trade_signal = TradingDecision.NEUTRAL
@@ -234,7 +238,12 @@ class RulePolicy(Strategy):
     
     def _trade(self, bar: Bar, confidence: float = 0.50):
         side = trading_decision_to_order_side(self._trade_signal)
-        self.log.info(f"Trade signal: {self._trade_signal.name}. Placing {side.name} order.")
+        self.log.info(f"Trade signal: {self._trade_signal.name}.")
+
+        # No action for NEUTRAL signals
+        if side == OrderSide.NO_ORDER_SIDE:
+            self.log.info("No trade action taken for NEUTRAL signal.", color=LogColor.YELLOW)
+            return
 
         # --- Determine if RVI filter passes ---
         rvi_ok = True if (side == OrderSide.BUY and self._volatility == Volatility.BULLISH) or \
@@ -247,6 +256,7 @@ class RulePolicy(Strategy):
             )
             return
 
+        self.log.info(f"Placing {side.name} order.")
         # --- Entry Logic by Signal Type ---
         if self._trade_signal != TradingDecision.NEUTRAL:
             self._send_trade(self._trade_signal, entry=bar, order_side=side, confidence=confidence, 
