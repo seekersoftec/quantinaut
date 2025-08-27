@@ -16,6 +16,7 @@ def risk_engine() -> AdaptiveRiskEngine:
         model_name="fixed_fractional",
         model_init_args={"risk_pct":0.2}, # 0.05, 0.2
         # risk_model=RiskModelConfig(init_args=dict(risk_pct=0.2)), # 0.05, 0.2
+        min_confidence_threshold=0.45,
         bracket_distance_atr=2.5, # 3
         trailing_atr_multiple=0.3, # 0.3
         trigger_type="MARK_PRICE",
