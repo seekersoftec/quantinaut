@@ -2,6 +2,8 @@
 from abc import ABCMeta, abstractmethod
 from typing import Any, Dict, List, Optional, Union
 
+import pandas as pd
+
 
 class Label(metaclass=ABCMeta):
     """
@@ -29,7 +31,7 @@ class Label(metaclass=ABCMeta):
         pass
     
     @abstractmethod
-    def transform_many(self, X: Optional[Dict[str, Any]] = None) -> List[Union[int, float]]:
+    def transform_many(self, X: Optional[Dict[str, Any]] = None) -> Union[List[Union[int, float]], pd.Series]:
         """
         Transform input features for multiple samples into labels.
 

@@ -27,9 +27,9 @@ from quantinaut.indicators.atr_vwap import AverageTrueRangeWithVwap
 
 np.random.seed(100)
     
-class SimpleRulePolicyConfig(StrategyConfig, frozen=True):
+class RulePolicyConfig(StrategyConfig, frozen=True):
     """
-    Configuration for SimpleRulePolicy instances, tailored for rule-based ML models.
+    Configuration for RulePolicy instances, tailored for rule-based ML models.
 
     This configuration provides a robust set of parameters to define the behavior
     of a machine learning-based trading strategy. It covers model loading,
@@ -77,15 +77,15 @@ class SimpleRulePolicyConfig(StrategyConfig, frozen=True):
     scaler_path: Union[Path, str, None] = None
 
 
-class SimpleRulePolicy(Strategy):
+class RulePolicy(Strategy):
     """
         Intelligent Trading Strategy
         
         Uses online approach.
     """
-    def __init__(self, config: SimpleRulePolicyConfig) -> None:
+    def __init__(self, config: RulePolicyConfig) -> None:
         PyCondition.not_none(config, "config")
-        PyCondition.type(config, SimpleRulePolicyConfig, "config")
+        PyCondition.type(config, RulePolicyConfig, "config")
         PyCondition.type(config.bar_type, BarType, "bar_type")
         PyCondition.type(config.client_id, ClientId, "client_id")
         PyCondition.positive_int(config.rvi_period, "rvi_period")

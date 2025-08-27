@@ -1,7 +1,7 @@
-# quantinaut/indicators/simple_set.py
 import pandas as pd
 from datetime import datetime
 from collections import deque
+from typing import Optional
 from nautilus_trader.core.correctness import PyCondition
 from nautilus_trader.model.data import Bar
 from nautilus_trader.model.enums import PriceType
@@ -41,9 +41,9 @@ class AverageTrueRangeWithVwap(Indicator):
         self._atr = AverageTrueRange(period)
         self._vwap = VolumeWeightedAveragePrice()
         
-        self.features: Feature = None    
-        self.label: Label = None    
-        self.model: OnlineModel = None 
+        self.features: Optional[Feature] = None    
+        self.label: Optional[Label] = None    
+        self.model: Optional[OnlineModel] = None 
         self.metric = 0.0 
         
         self.atr = 0.0
@@ -68,7 +68,7 @@ class AverageTrueRangeWithVwap(Indicator):
                         bar.close.as_double(), hlc3, bar.volume.as_double(), 
                         pd.Timestamp(bar.ts_init, tz="UTC"))
     
-    def update_raw(self, high: float, low: float, close: float, price: float, volume: float = 0.0, ts: datetime = None):
+    def update_raw(self, high: float, low: float, close: float, price: float, volume: float, ts: datetime):
         """
         Update the indicator with the given raw value.
 
@@ -93,7 +93,7 @@ class AverageTrueRangeWithVwap(Indicator):
         
         self.atr = self._atr.value
         self.vwap = self._vwap.value
-        if self.model is not None and self._count >= self.period: # 
+        if self.model is not None and self.features is not None and self.label is not None and self._count >= self.period: # 
             # Assemble the features from the rolling window
             features = self.features.generate({"atr": self._atr.value, "vwap": self._vwap.value, "prices": list(self._prices)})
             target = self.label.transform_one({"prices": list(self._prices)})

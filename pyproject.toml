@@ -46,9 +46,9 @@ requires = [
 ]
 build-backend = "poetry.core.masonry.api"
 
-# [tool.poetry.build]
-# script = "build.py"
-# generate-setup-file = false
+#[tool.poetry.build]
+#script = "build.py"
+#generate-setup-file = false
 
 # pytest configuration
 [tool.pytest.ini_options]

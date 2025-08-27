@@ -34,7 +34,7 @@ from nautilus_trader.model.objects import Money
 from nautilus_trader.persistence.wranglers import BarDataWrangler
 from nautilus_trader.test_kit.providers import TestInstrumentProvider
 from quantinaut.portfolio import AdaptiveRiskEngine, AdaptiveRiskEngineConfig
-from quantinaut.strategies.simple_rule_policy import SimpleRulePolicyConfig, SimpleRulePolicy
+from quantinaut.strategies.rule_policy import RulePolicyConfig, RulePolicy
 
 # Load environment variables from .env file
 load_dotenv("./.env")
@@ -138,7 +138,7 @@ if __name__ == "__main__":
     engine.add_data(bars)
 
     # Configure your strategies
-    srp_config = SimpleRulePolicyConfig(
+    srp_config = RulePolicyConfig(
         bar_type=bar_type,
         rvi_period=9, # 9, 10, 21
         rvi_threshold=60, # 60
@@ -147,7 +147,7 @@ if __name__ == "__main__":
     # Instantiate and add your strategy
     strategies = [
         configure_risk_engine(),
-        SimpleRulePolicy(config=srp_config),
+        RulePolicy(config=srp_config),
     ]
     engine.add_strategies(strategies=strategies)
 

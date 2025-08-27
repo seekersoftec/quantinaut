@@ -10,7 +10,7 @@ from nautilus_trader.common.enums import LogColor
 from nautilus_trader.model.enums import OrderSide, TimeInForce, OrderType, TrailingOffsetType
 from nautilus_trader.model.identifiers import ClientId, InstrumentId
 from quantinaut.common.enums import MLTaskType
-from quantinaut.strategies.ml_strategy import MLStrategy, MLStrategyConfig
+from data.toolkit.old_ml_strategy import MLStrategy, MLStrategyConfig
 
 
 class LightGBMStrategyConfig(MLStrategyConfig, frozen=True):
