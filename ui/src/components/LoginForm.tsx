@@ -12,8 +12,8 @@ type LoginFormProps = {
 };
 
 const handleSubmitForm = (data: { email: string; password: string }) => {
-  signIn("hasura-credentials", {
-    email: data.email,
+  signIn("nautilus-server-credentials", {
+    username: data.email,
     password: CryptoJS.MD5(data.password),
   });
 };

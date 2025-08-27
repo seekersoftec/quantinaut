@@ -6,7 +6,7 @@ import { getProviders } from "next-auth/react";
 
 import Divider from "@/components/Divider";
 import LoginForm from "@/components/LoginForm";
-import LoginButton from "@/components/buttons/LoginButton";
+import LoginButton from "@/components/login_buttons/LoginButton";
 
 type Providers = Awaited<ReturnType<typeof getProviders>>
 
@@ -16,7 +16,7 @@ const renderLoginButtons = (
   providers
     ? Object.values(providers)
       .filter((provider) => provider !== null)
-      .filter(({ id }) => id !== "hasura-credentials")
+      .filter(({ id }) => id !== "nautilus-server-credentials")
       .map((provider) => <LoginButton auth={provider} key={provider.id} />)
     : null;
 

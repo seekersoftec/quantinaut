@@ -1,9 +1,12 @@
+// app/page.tsx
+import { Layout, Menu } from 'antd';
+import 'antd/dist/antd.css';
 import Image from "next/image";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
-import LoginButton from "@/components/buttons/LoginButton";
-import LogoutButton from "@/components/buttons/LogoutButton";
+import LoginButton from "@/components/login_buttons/LoginButton";
+import LogoutButton from "@/components/login_buttons/LogoutButton";
 
 export default async function Home() {
   const session = await auth();
@@ -24,7 +27,7 @@ export default async function Home() {
 
             <Image
               src="/images/logo.png"
-              alt="Nautilus AI Logo"
+              alt="Quantinaut Logo"
               // className="dark:invert"
               width={100}
               height={24}
@@ -36,7 +39,7 @@ export default async function Home() {
       </div>
 
       <h1 className="text-3xl font-bold text-center mb-8 lg:mb-0">
-        Nautilus AI
+        Quantinaut
       </h1>
 
       <div className="relative mb-8 flex place-items-center lg:my-0">
@@ -56,3 +59,36 @@ export default async function Home() {
     </main>
   );
 }
+
+
+// 'use client';
+// import React, { useEffect } from 'react';
+// import Chart from '@/pages/chart'; // reuse your existing component
+// import { useConfigsStore, useDataFrameStore } from '@/store';
+// import { PubSub } from '@/events/pubsub';
+// import * as Notifications from '@/utils/notifications';
+// import { redirect } from 'next/navigation';
+// import { auth } from '@/auth';
+
+// export default async function Home() {
+//   const session = await auth();
+
+//   if (!session) {
+//     redirect("/auth/signin");
+//   }
+
+//   useEffect(() => {
+//     async function init() {
+//       const pubsub = await PubSub.getInstance();
+//       await useConfigsStore.getState().setDefault();
+//       await useDataFrameStore.getState().restore();
+//       Notifications.mount(pubsub);
+//       pubsub.subscribe('DataFrame', (payload) => {
+//         useDataFrameStore.getState().add([payload]);
+//       });
+//     }
+//     init();
+//   }, []);
+
+//   return <Chart />;
+// }
