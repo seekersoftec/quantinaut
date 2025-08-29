@@ -15,7 +15,6 @@
 # -------------------------------------------------------------------------------------------------
 
 import asyncio
-from decimal import Decimal
 import os
 from dotenv import load_dotenv
 
@@ -31,11 +30,7 @@ from nautilus_trader.config import InstrumentProviderConfig
 from nautilus_trader.config import LiveExecEngineConfig
 from nautilus_trader.config import LoggingConfig
 from nautilus_trader.config import TradingNodeConfig
-from nautilus_trader.examples.strategies.volatility_market_maker import VolatilityMarketMaker
-from nautilus_trader.examples.strategies.volatility_market_maker import VolatilityMarketMakerConfig
 from nautilus_trader.live.node import TradingNode
-from nautilus_trader.model.data import BarType
-from nautilus_trader.model.identifiers import InstrumentId
 from nautilus_trader.model.identifiers import TraderId
 from quantinaut.channels.telegram import TelegramChannel, TelegramChannelConfig
 
@@ -111,26 +106,15 @@ async def main():
     # Instantiate the node with a configuration
     node = TradingNode(config=config_node)
 
-    # Configure your strategy
-    strat_config = VolatilityMarketMakerConfig(
-        instrument_id=InstrumentId.from_str("ETHUSDT-PERP.BINANCE"),
-        external_order_claims=[InstrumentId.from_str("ETHUSDT-PERP.BINANCE")],
-        bar_type=BarType.from_str("ETHUSDT-PERP.BINANCE-1-MINUTE-LAST-EXTERNAL"),
-        atr_period=20,
-        atr_multiple=6.0,
-        trade_size=Decimal("0.010"),
-        # manage_gtd_expiry=True,
-    )
+    # Configure your actor
     channel_config = TelegramChannelConfig(
         token=os.getenv("TELEGRAM_TOKEN") or "",
         chat_id=os.getenv("TELEGRAM_CHAT_ID") or ""
     )
     # Instantiate your strategy
-    strategy = VolatilityMarketMaker(config=strat_config)
     telegram = TelegramChannel(config=channel_config)
 
     # Add your strategies and modules
-    node.trader.add_strategy(strategy)
     node.trader.add_actor(telegram)
 
     # Register your client factories with the node (can take user-defined factories)

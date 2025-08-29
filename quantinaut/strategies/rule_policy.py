@@ -187,7 +187,7 @@ class RulePolicy(Strategy):
 
         confidence = self.atr_vwap.metric 
         if confidence is None:
-            raise ValueError("ATR-VWAP metric is None, cannot proceed with trading decision.")
+            raise ValueError("Confidence is None, cannot proceed with trading decision.")
 
         # Example volatility logic (can be customized)
         # TODO: try consistent increase or decrease as another approach AND check for divergence too 
