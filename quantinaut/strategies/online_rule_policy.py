@@ -12,6 +12,7 @@ from nautilus_trader.model.data import Bar, BarType, DataType
 from nautilus_trader.model.instruments import Instrument
 from nautilus_trader.model.identifiers import ClientId
 from nautilus_trader.model.enums import OrderSide, TimeInForce, OrderType
+
 from nautilus_trader.config import StrategyConfig
 from nautilus_trader.trading.strategy import Strategy
 from nautilus_trader.indicators.rvi import RelativeVolatilityIndex
@@ -19,13 +20,16 @@ from nautilus_trader.indicators.rvi import RelativeVolatilityIndex
 from quantinaut.common import save_logs, trading_decision_to_order_side
 from quantinaut.common import TradingDecision, TradeSignal, Volatility
 from quantinaut.channels import ChannelData
-from quantinaut.models import load_model
+from quantinaut.features import Feature, F1
+from quantinaut.labels import Label, RawReturn
+from quantinaut.models import OnlineModel, LogisticRegressionModel
+from quantinaut.indicators.atr_vwap import AverageTrueRangeWithVwap
 
 np.random.seed(100)
     
-class RulePolicyConfig(StrategyConfig, frozen=True):
+class OnlineRulePolicyConfig(StrategyConfig, frozen=True):
     """
-    Configuration for RulePolicy instances, tailored for rule-based ML models.
+    Configuration for OnlineRulePolicy instances, tailored for rule-based ML models.
 
     This configuration provides a robust set of parameters to define the behavior
     of a machine learning-based trading strategy. It covers model loading,
@@ -59,30 +63,38 @@ class RulePolicyConfig(StrategyConfig, frozen=True):
         Path to load the scaler from.
     """
     bar_type: BarType
-    client_id: ClientId = ClientId("RP-001")
+    client_id: ClientId = ClientId("ORP-001")
     
     rvi_period: PositiveInt = 9
     rvi_threshold: PositiveFloat = 50.0
-    model_path: Path = Path("./data/models/model.pkl")
+    atr_vwap_period: PositiveInt = 14
+    atr_vwap_batch_bars: bool = False  # Whether to use batch bars for ATR-VWAP
+    features: Feature = F1()
+    label: Label = RawReturn(logarithmic=True, binary=False)
+    model: OnlineModel = LogisticRegressionModel()
+    model_path: Path = Path("./data/models/atr_vwap_model.pkl")
     scale_data: bool = False
     scaler_path: Union[Path, str, None] = None
-    save_logs: bool = False
 
 
-class RulePolicy(Strategy):
+class OnlineRulePolicy(Strategy):
     """
         Intelligent Trading Strategy
         
-        Uses offline approach, train a model offline and deploy it using this strategy.
+        Uses online approach.
     """
-    def __init__(self, config: RulePolicyConfig) -> None:
+    def __init__(self, config: OnlineRulePolicyConfig) -> None:
         PyCondition.not_none(config, "config")
-        PyCondition.type(config, RulePolicyConfig, "config")
+        PyCondition.type(config, OnlineRulePolicyConfig, "config")
         PyCondition.type(config.bar_type, BarType, "bar_type")
         PyCondition.type(config.client_id, ClientId, "client_id")
         PyCondition.positive_int(config.rvi_period, "rvi_period")
         PyCondition.positive(config.rvi_threshold, "rvi_threshold")
-    
+        
+        PyCondition.type(config.features, Feature, "features")
+        PyCondition.type(config.label, Label, "label")
+        PyCondition.type(config.model, OnlineModel, "model")
+
         super().__init__(config)
 
         self._notification_channel_id = None
@@ -96,12 +108,10 @@ class RulePolicy(Strategy):
         self.tick_size = None
 
         self.rvi = RelativeVolatilityIndex(config.rvi_period)
-        self.model, self.scaler = load_model({
-            "model_path": config.model_path,
-            "scale_data": config.scale_data,
-            "scaler_path": config.scaler_path
-        }, self.log)
-        
+        self.atr_vwap = AverageTrueRangeWithVwap(
+            period=config.atr_vwap_period,
+            batch_bars=config.atr_vwap_batch_bars
+        )
 
     def on_start(self) -> None:
         """
@@ -150,6 +160,19 @@ class RulePolicy(Strategy):
         Actions to be performed when the strategy is reset.
         """
         self.rvi.reset()
+        self.atr_vwap.reset()
+    
+    def on_load(self) -> None:
+        """
+        Loads the model and scaler when the strategy state is loaded.
+        """
+        self.atr_vwap.model.load(self.config.model_path)
+    
+    def on_save(self) -> None:
+        """
+        Saves the model and scaler when the strategy state is saved.
+        """
+        self.atr_vwap.model.save(self.config.model_path)
     
     def on_data(self, data: Data) -> None:
         """
@@ -186,15 +209,13 @@ class RulePolicy(Strategy):
         Sets the trade signal and volatility, then triggers trade and logging actions.
         """
         # Map prediction to trade signal (example logic)
-        if self.model is None:
-            self.log.warning("Model is None, cannot proceed with trading decision.")
+        if self.atr_vwap.value is None:
+            self.log.warning("ATR-VWAP value is None, cannot proceed with trading decision.")
             return
         
-        self.value = self.model.predict([])
-
-        if self.value > 0:
+        if self.atr_vwap.value > 0:
             self._trade_signal = TradingDecision.ENTER_LONG
-        elif self.value < 0:
+        elif self.atr_vwap.value < 0:
             self._trade_signal = TradingDecision.ENTER_SHORT
         else:
             self._trade_signal = TradingDecision.NEUTRAL
@@ -213,8 +234,7 @@ class RulePolicy(Strategy):
 
         # Execute trade and log
         self._trade(bar, confidence)
-        if self.config.save_logs:
-            self._save_logs(bar, prediction=self.value, confidence=confidence, trade_signal=self._trade_signal.name)
+        self._save_logs(bar, prediction=self.atr_vwap.value, confidence=confidence, trade_signal=self._trade_signal.name)
     
     def _trade(self, bar: Bar, confidence: float = 0.50):
         side = trading_decision_to_order_side(self._trade_signal)
@@ -253,7 +273,7 @@ class RulePolicy(Strategy):
                 entry=entry,
                 action=action,
                 time_in_force=TimeInForce.GTC,
-                reason=f"RP={action.name}",
+                reason=f"SRP={action.name}",
                 **kwargs
             )
         self.publish_data(

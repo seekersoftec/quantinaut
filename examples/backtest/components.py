@@ -3,8 +3,8 @@
 from decimal import Decimal
 
 from nautilus_trader.model.data import BarType
-from quantinaut.portfolio import AdaptiveRiskEngine, AdaptiveRiskEngineConfig
-from quantinaut.strategies.rule_policy import RulePolicyConfig, RulePolicy
+from data.toolkit.portfolio import AdaptiveRiskEngine, AdaptiveRiskEngineConfig
+from quantinaut.strategies.online_rule_policy import OnlineRulePolicyConfig, OnlineRulePolicy
 
 def risk_engine() -> AdaptiveRiskEngine:
     """Configure and return an AdaptiveRiskEngine instance.
@@ -27,7 +27,7 @@ def risk_engine() -> AdaptiveRiskEngine:
     )
     return AdaptiveRiskEngine(config=config)
 
-def rule_policy_strategy(bar_type: BarType) -> RulePolicy:
+def rule_policy_strategy(bar_type: BarType) -> OnlineRulePolicy:
     """Configure and return a SwingCross strategy instance.
     
     A combination of period(s):
@@ -48,10 +48,10 @@ def rule_policy_strategy(bar_type: BarType) -> RulePolicy:
     rvi_period=>9, 10, 21
     """
     # Configure your strategies
-    config = RulePolicyConfig(
+    config = OnlineRulePolicyConfig(
         bar_type=bar_type,
         rvi_period=9, # 9, 10, 21
         rvi_threshold=50, # 60
         # atr_vwap_batch_bars=True,
     )
-    return RulePolicy(config=config)
+    return OnlineRulePolicy(config=config)
