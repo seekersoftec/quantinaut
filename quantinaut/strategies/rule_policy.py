@@ -15,6 +15,7 @@ from nautilus_trader.model.enums import OrderSide, TimeInForce, OrderType
 from nautilus_trader.config import StrategyConfig
 from nautilus_trader.trading.strategy import Strategy
 from nautilus_trader.indicators.rvi import RelativeVolatilityIndex
+from nautilus_trader.indicators.atr import AverageTrueRange
 
 from quantinaut.common import save_logs, trading_decision_to_order_side
 from quantinaut.common import TradingDecision, TradeSignal, Volatility
@@ -37,20 +38,10 @@ class RulePolicyConfig(StrategyConfig, frozen=True):
         BarType object representing the instrument and it's timeframe.
     client_id : ClientId
         The client ID for the strategy, used for logging and identification.
-     rvi_period : PositiveInt, default=9
+    rvi_period : PositiveInt, default=9
         Period for RVI indicator.
     rvi_threshold : PositiveFloat, default=55.0
         Threshold for RVI filter
-    atr_vwap_period : PositiveInt, default=14
-        Period for ATR-VWAP indicator.
-    atr_vwap_batch_bars : bool, default=True
-        Whether to use batch bars for ATR-VWAP.
-    features : Feature
-        Feature engineering configuration for the strategy.
-    label : Label
-        Labeling method for the strategy.
-    model : OnlineModel
-        Online learning model for the strategy.
     model_path : Union[Path, str, None], default=None
         Path to load the pre-trained model from.
     scale_data : bool, default=False
@@ -96,6 +87,7 @@ class RulePolicy(Strategy):
         self.tick_size = None
 
         self.rvi = RelativeVolatilityIndex(config.rvi_period)
+        self.atr = AverageTrueRange(period=14)
         self.model, self.scaler = load_model({
             "model_path": config.model_path,
             "scale_data": config.scale_data,
@@ -106,14 +98,7 @@ class RulePolicy(Strategy):
     def on_start(self) -> None:
         """
         Handles strategy startup logic: initializes instruments, indicators, and attaches ML model.
-        """
-        # Attach feature, label, and model to indicator
-        self.atr_vwap.set_model(
-            features=self.config.features,
-            label=self.config.label,
-            model=self.config.model
-        )
-        
+        """        
         self.instrument = self.cache.instrument(self.instrument_id)
         if self.instrument is None:
             self.log.error(f"Could not find instrument for {self.instrument_id}")
@@ -123,7 +108,7 @@ class RulePolicy(Strategy):
         self.tick_size = self.instrument.price_increment
 
         self.register_indicator_for_bars(self.config.bar_type, self.rvi)
-        self.register_indicator_for_bars(self.config.bar_type, self.atr_vwap)
+        self.register_indicator_for_bars(self.config.bar_type, self.atr)
 
         # Get historical data
         self.request_bars(self.config.bar_type)
@@ -150,6 +135,7 @@ class RulePolicy(Strategy):
         Actions to be performed when the strategy is reset.
         """
         self.rvi.reset()
+        self.atr.reset()
     
     def on_data(self, data: Data) -> None:
         """

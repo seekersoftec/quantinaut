@@ -20,8 +20,8 @@ from nautilus_trader.persistence.wranglers import BarDataWrangler
 # from nautilus_trader.persistence.wranglers_v2 import BarDataWranglerV2
 from nautilus_trader.persistence.loaders import CSVBarDataLoader
 
-from examples.backtest.components import risk_engine, rule_policy_strategy
-from examples.backtest.providers import TestInstrumentProvider
+from data.backtest.components import risk_engine, rule_policy_strategy
+from data.backtest.providers import TestInstrumentProvider
 
 
 

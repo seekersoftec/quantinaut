@@ -34,7 +34,7 @@ from nautilus_trader.model.objects import Money
 from nautilus_trader.persistence.wranglers import BarDataWrangler
 from nautilus_trader.test_kit.providers import TestInstrumentProvider
 
-from examples.backtest.components import risk_engine, rule_policy_strategy
+from data.backtest.components import risk_engine, rule_policy_strategy
 
 # Load environment variables from .env file
 load_dotenv("./.env")
