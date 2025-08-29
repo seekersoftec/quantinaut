@@ -39,6 +39,7 @@ from nautilus_trader.model.identifiers import TraderId
 from nautilus_trader.examples.strategies.volatility_market_maker import VolatilityMarketMaker
 from nautilus_trader.examples.strategies.volatility_market_maker import VolatilityMarketMakerConfig
 
+from quantinaut.strategies.rule_policy import RulePolicy, RulePolicyConfig
 from quantinaut.channels.telegram import TelegramChannel, TelegramChannelConfig
 
 # Load environment variables from .env file
@@ -108,25 +109,28 @@ async def main():
     node = TradingNode(config=config_node)
 
     # Configure your strategy
-    strat_config = VolatilityMarketMakerConfig(
-        instrument_id=InstrumentId.from_str("ETHUSDT-LINEAR.BYBIT"),
-        external_order_claims=[InstrumentId.from_str("ETHUSDT-LINEAR.BYBIT")],
-        bar_type=BarType.from_str("ETHUSDT-LINEAR.BYBIT-1-MINUTE-LAST-EXTERNAL"),
-        atr_period=20,
-        atr_multiple=6.0,
-        trade_size=Decimal("0.010"),
-        # manage_gtd_expiry=True,
-    )
+    instruments = ["ETHUSDT-LINEAR.BYBIT"]
+    strategies = []
+    for instrument in instruments:
+        strat_config = RulePolicyConfig(
+            bar_type=BarType.from_str(f"{instrument}-1-MINUTE-LAST-EXTERNAL"),
+            atr_period=21,
+            atr_multiple=6.0,
+            trade_size=Decimal("0.010"),
+        )
+        # strategy = VolatilityMarketMaker(config=strat_config)
+        strategy = RulePolicy(config=strat_config)
+        strategies.append(strategy)
+
+    # Channel 
     channel_config = TelegramChannelConfig(
         token=os.getenv("TELEGRAM_TOKEN") or "",
         chat_id=os.getenv("TELEGRAM_CHAT_ID") or ""
     )
-    # Instantiate your strategy
-    strategy = VolatilityMarketMaker(config=strat_config)
     telegram = TelegramChannel(config=channel_config)
 
-    # Add your strategies and modules
-    node.trader.add_strategy(strategy)
+    # Add strategies and modules
+    node.trader.add_strategies(strategies)
     node.trader.add_actor(telegram)
 
     # Register client factories with the node

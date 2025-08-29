@@ -1,3 +1,4 @@
+from decimal import Decimal
 from pathlib import Path
 from typing import Optional, Union
 import pandas as pd
@@ -52,6 +53,9 @@ class RulePolicyConfig(StrategyConfig, frozen=True):
     bar_type: BarType
     client_id: ClientId = ClientId("RP-001")
     
+    atr_period: PositiveInt = 21
+    atr_multiple: PositiveFloat = 3.0
+    trade_size: Decimal = Decimal("0.010")
     rvi_period: PositiveInt = 9
     rvi_threshold: PositiveFloat = 50.0
     model_path: Path = Path("./data/models/model.pkl")

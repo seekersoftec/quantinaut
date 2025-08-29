@@ -17,7 +17,7 @@ class OnlineModel(metaclass=ABCMeta):
     """
     
     @property
-    def metric(self):
+    def metric(self) -> Any:
         pass
 
     @abstractmethod
